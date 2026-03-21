@@ -308,12 +308,18 @@ async function sheetsExportarTodo() {
 
 // ── Ping / test de conexión ───────────────────────────────────────────
 async function testConexionSupabase() {
-  const sb = getSupabase();
+  // Leer directamente de los inputs (no requiere haber guardado antes)
+  const url = (document.getElementById('sbUrlInput')?.value || '').trim();
+  const key = (document.getElementById('sbKeyInput')?.value || '').trim();
   const btn = document.getElementById('btnTestConexion');
-  if (!sb) { toast('Ingresa URL y Key primero', true); return; }
+
+  if (!url || !key) { toast('Ingresa la URL y la Key primero', true); return; }
+  if (!url.startsWith('https://')) { toast('⚠️ La URL debe empezar con https://', true); return; }
+
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Probando…'; }
   try {
-    const { error } = await sb.from('productos').select('id').limit(1);
+    const clienteTest = supabase.createClient(url, key);
+    const { error } = await clienteTest.from('productos').select('id').limit(1);
     if (error) throw new Error(error.message);
     toast('✅ Conexión exitosa a Supabase');
   } catch(e) {
