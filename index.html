@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<html lang="es"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#16a34a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Despensa Económica — Sistema de Ventas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Space+Mono:wght@700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&amp;family=Space+Mono:wght@700&amp;display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer=""></script>
   <style>
     :root {
       --bg: #f0fdf4;
@@ -475,11 +474,11 @@
 <body>
 
 <!-- ===== LOADING OVERLAY ===== -->
-<div id="appLoadingOverlay">
+<div id="appLoadingOverlay" class="hidden" style="display: none;">
   <div class="loading-logo">Despensa<span> Económica</span></div>
   <div class="loading-spinner"></div>
-  <div class="loading-msg" id="loadingMsg">Iniciando base de datos…</div>
-  <div class="loading-badge" id="loadingBadge">IndexedDB</div>
+  <div class="loading-msg" id="loadingMsg">Listo</div>
+  <div class="loading-badge" id="loadingBadge">IndexedDB ✓</div>
 </div>
 
 <!-- NAVBAR -->
@@ -498,10 +497,10 @@
   <div class="nav-stats">
     <div class="idb-badge" id="idbStatusBadge" title="Base de datos">
       <span class="dot" id="idbDot"></span>
-      <span id="idbStatusText">IDB</span>
+      <span id="idbStatusText">IDB ✓</span>
     </div>
-    <div class="stat-chip" id="statProds">Productos: <b>0</b></div>
-    <div class="stat-chip" id="statVentas">Hoy: <b>$0.00</b></div>
+    <div class="stat-chip" id="statProds">Productos: <b>28</b></div>
+    <div class="stat-chip" id="statVentas">Hoy: <b>$20.20</b></div>
   </div>
 
   <button class="reload-btn" id="reloadBtn" onclick="softReload()" title="Recargar app">🔄</button>
@@ -517,10 +516,10 @@
     <div class="drawer-header">
       <div class="drawer-brand">Despensa<span> Económica</span></div>
       <div class="drawer-stats-grid">
-        <div class="drawer-stat"><div class="ds-lbl">Productos</div><div class="ds-val" id="drawerStatProds">0</div></div>
-        <div class="drawer-stat"><div class="ds-lbl">Venta Hoy</div><div class="ds-val" id="drawerStatVentas">$0.00</div></div>
-        <div class="drawer-stat"><div class="ds-lbl">Venta Mes</div><div class="ds-val" id="drawerStatMes">$0.00</div></div>
-        <div class="drawer-stat"><div class="ds-lbl">Stock Crit.</div><div class="ds-val" id="drawerStatCrit">0</div></div>
+        <div class="drawer-stat"><div class="ds-lbl">Productos</div><div class="ds-val" id="drawerStatProds">28</div></div>
+        <div class="drawer-stat"><div class="ds-lbl">Venta Hoy</div><div class="ds-val" id="drawerStatVentas">$20.20</div></div>
+        <div class="drawer-stat"><div class="ds-lbl">Venta Mes</div><div class="ds-val" id="drawerStatMes">$20.20</div></div>
+        <div class="drawer-stat"><div class="ds-lbl">Stock Crit.</div><div class="ds-val" id="drawerStatCrit" style="color: rgb(248, 113, 113);">8</div></div>
       </div>
     </div>
     <div class="drawer-nav">
@@ -567,42 +566,136 @@
     <p>Registra ventas rápidamente con búsqueda por nombre o código de barras</p>
     <button class="btn-venta-big" onclick="abrirModalVenta()">🛒 REGISTRAR VENTA</button>
   </div>
-  <div id="statsRowDash" class="stats-row"></div>
+  <div id="statsRowDash" class="stats-row">
+    <div class="stat-box"><div class="s-lbl">Venta Hoy</div><div class="s-val">$20.20</div></div>
+    <div class="stat-box"><div class="s-lbl">Ítems Hoy</div><div class="s-val">62</div></div>
+    <div class="stat-box"><div class="s-lbl">Venta Mes</div><div class="s-val">$20.20</div></div>
+    <div class="stat-box"><div class="s-lbl">Cobros</div><div class="s-val">33</div></div>
+    <div class="stat-box"><div class="s-lbl">Gastos Mes</div><div class="s-val" style="color:var(--red)">$7.75</div></div>
+    <div class="stat-box"><div class="s-lbl">Stock Crit.</div><div class="s-val" style="color:var(--red)">8</div></div>
+  </div>
 
   <!-- ===== PANEL DE CAJA ===== -->
   <div class="caja-panel" id="cajaPanelDash">
     <div class="caja-header">
       <div class="caja-header-title">🏦 Estado de Caja e Inventario</div>
-      <div class="caja-header-fecha" id="cajaPanelFecha"></div>
+      <div class="caja-header-fecha" id="cajaPanelFecha">Marzo de 2026</div>
     </div>
 
     <!-- Fila principal: 4 métricas clave -->
     <div class="caja-grid" id="cajaGridPrincipal">
-      <!-- Se llena con renderCajaPanel() -->
+    <div class="caja-celda destacado positivo">
+      <div class="caja-celda-lbl">💵 Dinero en Caja</div>
+      <div class="caja-celda-val">$41.82</div>
+      <div class="caja-celda-sub">Inicial $49.57 + ventas confirmadas − gastos</div>
+      <div style="margin-top:5px;background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.35);border-radius:7px;padding:4px 8px;font-size:11px;font-weight:800;color:#92400e;">⏳ Hoy $20.20 pendiente — registra en Ventas por Día</div>
     </div>
+    <div class="caja-celda neutro">
+      <div class="caja-celda-lbl">📦 Valor Inventario</div>
+      <div class="caja-celda-val">$73.85</div>
+      <div class="caja-celda-sub">Precio venta × stock actual<br>A precio compra: $54.97</div>
+    </div>
+    <div class="caja-celda positivo">
+      <div class="caja-celda-lbl">📈 Entró a Caja</div>
+      <div class="caja-celda-val">$0.00</div>
+      <div class="caja-celda-sub">Ventas confirmadas del mes · Hoy aún sin registrar</div>
+    </div>
+    <div class="caja-celda negativo">
+      <div class="caja-celda-lbl">📤 Salió de Caja</div>
+      <div class="caja-celda-val">$7.75</div>
+      <div class="caja-celda-sub">Facturas $7.75 · Gastos $0.00</div>
+    </div>
+  </div>
 
     <!-- Flujo del mes -->
     <div class="caja-flujo" id="cajaFlujoMes">
-      <!-- Se llena con renderCajaPanel() -->
+    <div class="flujo-item">
+      <div class="flujo-icono">🏦</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Efectivo Inicial</div>
+        <div class="flujo-val neu">$49.57</div>
+      </div>
     </div>
+    <div style="font-size:18px;color:var(--text-muted);font-weight:900;align-self:center;">+</div>
+    <div class="flujo-item">
+      <div class="flujo-icono">📦</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Inv. Inicial</div>
+        <div class="flujo-val neu">$87.45</div>
+      </div>
+    </div>
+    <div style="font-size:18px;color:var(--text-muted);font-weight:900;align-self:center;">+</div>
+    <div class="flujo-item">
+      <div class="flujo-icono">🛒</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Ventas Confirmadas</div>
+        <div class="flujo-val pos">+$0.00</div>
+      </div>
+    </div>
+    <div style="font-size:18px;color:var(--red);font-weight:900;align-self:center;">−</div>
+    <div class="flujo-item">
+      <div class="flujo-icono">🧾</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Facturas/Pagos</div>
+        <div class="flujo-val neg">−$7.75</div>
+      </div>
+    </div>
+    <div style="font-size:18px;color:var(--text-muted);font-weight:900;align-self:center;">=</div>
+    <div class="flujo-item" style="border-color:var(--border-mid);background:var(--green-light);">
+      <div class="flujo-icono">💵</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Caja Actual</div>
+        <div class="flujo-val pos">$41.82</div>
+      </div>
+    </div>
+    
+    <div class="flujo-item" style="border-color:#ddd6fe;background:#faf5ff;">
+      <div class="flujo-icono">📅</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Prom. diario</div>
+        <div class="flujo-val" style="color:#7c3aed;">$0.96</div>
+      </div>
+    </div>
+    <div class="flujo-item" style="border-color:#ddd6fe;background:#faf5ff;">
+      <div class="flujo-icono">🔮</div>
+      <div class="flujo-info">
+        <div class="flujo-lbl">Proyección mes</div>
+        <div class="flujo-val" style="color:#7c3aed;">$29.82</div>
+      </div>
+    </div>
+  </div>
 
     <!-- Balance final -->
     <div class="caja-balance" id="cajaBalanceFinal">
-      <!-- Se llena con renderCajaPanel() -->
+    <div>
+      <div style="font-size:12px;font-weight:900;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">📊 Capital Total</div>
+      <div style="font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:#0369a1;">$115.67</div>
+      <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-top:3px;">Caja $41.82 + Inventario $73.85</div>
     </div>
+    <div class="balance-resultado">
+      
+      <div style="text-align:center;">
+        <div style="font-size:10px;font-weight:900;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">vs. Capital Inicial</div>
+        <div class="balance-badge neg">
+          🔴 PÉRDIDA: $-21.35
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);font-weight:700;margin-top:4px;">Capital inicial: $137.02</div>
+      </div>
+    </div>
+  </div>
   </div>
 
   <div class="backup-bar">
     <div class="bb-info">
       <div class="bb-title">💾 Respaldo de Datos</div>
-      <div class="bb-sub" id="backupSubtitle">Nunca has exportado un backup</div>
+      <div class="bb-sub" id="backupSubtitle">Último backup: hace 2 días (19/3/2026)</div>
     </div>
     <div class="bb-btns">
       <button class="btn-backup" onclick="exportarDatos()">📥 Exportar</button>
       <button class="btn-restore" onclick="document.getElementById('inputImportar').click()">📤 Restaurar</button>
       <button class="btn-restore" style="background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.55);" onclick="document.getElementById('inputFusionar').click()">🔀 Fusionar</button>
       <button class="btn-restore" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.35);" onclick="abrirModalCodigo()">💻 Ver Código</button>
-      <button class="btn-restore" style="background:rgba(52,211,153,0.25);border-color:rgba(52,211,153,0.6);" onclick="abrirConfigSheets()" title="Configurar Google Sheets"><span class="sheets-status">⚙️ Sheets</span></button>
+      <button class="btn-restore" style="background:rgba(52,211,153,0.25);border-color:rgba(52,211,153,0.6);" onclick="abrirConfigSheets()" title="Configurar Google Sheets"><span class="sheets-status" style="color: rgb(107, 114, 128);">⚙️ Sync</span></button>
       <input type="file" id="inputImportar" accept=".json" style="display:none" onchange="importarDatos(event)">
       <input type="file" id="inputFusionar" accept=".json" style="display:none" onchange="fusionarDatos(event)">
     </div>
@@ -628,11 +721,11 @@
         <div class="form-row" style="grid-template-columns:2fr 1fr 1fr;margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;">
             <label for="inpNom">Nombre del Producto *</label>
-            <input type="text" id="inpNom" placeholder="LECHE ENTERA 1L" required>
+            <input type="text" id="inpNom" placeholder="LECHE ENTERA 1L" required="">
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="inpCat">Categoría / Marca *</label>
-            <input type="text" id="inpCat" placeholder="LACTEOS" required>
+            <input type="text" id="inpCat" placeholder="LACTEOS" required="">
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="inpAbrev">Abreviatura</label>
@@ -652,19 +745,19 @@
         <div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;">
             <label for="inpCompra">Precio Compra $</label>
-            <input type="number" step="any" id="inpCompra" placeholder="0.00" required>
+            <input type="number" step="any" id="inpCompra" placeholder="0.00" required="">
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="inpVenta">Precio Venta $ *</label>
-            <input type="number" step="any" id="inpVenta" placeholder="0.00" required>
+            <input type="number" step="any" id="inpVenta" placeholder="0.00" required="">
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="inpStock">Stock Actual *</label>
-            <input type="number" id="inpStock" placeholder="0" required>
+            <input type="number" id="inpStock" placeholder="0" required="">
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="inpMin">Stock Mínimo *</label>
-            <input type="number" id="inpMin" placeholder="5" required>
+            <input type="number" id="inpMin" placeholder="5" required="">
           </div>
         </div>
         <!-- Imagen del producto -->
@@ -837,7 +930,14 @@
 
 <!-- REPORTES -->
 <div id="pgReportes" class="page">
-  <div id="statsRow" class="stats-row"></div>
+  <div id="statsRow" class="stats-row">
+    <div class="stat-box"><div class="s-lbl">Venta Hoy</div><div class="s-val">$20.20</div></div>
+    <div class="stat-box"><div class="s-lbl">Ítems Hoy</div><div class="s-val">62</div></div>
+    <div class="stat-box"><div class="s-lbl">Venta Mes</div><div class="s-val">$20.20</div></div>
+    <div class="stat-box"><div class="s-lbl">Cobros</div><div class="s-val">33</div></div>
+    <div class="stat-box"><div class="s-lbl">Gastos Mes</div><div class="s-val" style="color:var(--red)">$7.75</div></div>
+    <div class="stat-box"><div class="s-lbl">Stock Crit.</div><div class="s-val" style="color:var(--red)">8</div></div>
+  </div>
   <div class="balance-card">
     <div class="balance-header">
       <div class="bh-title"><span>📊</span> Balance del Mes</div>
@@ -931,14 +1031,14 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
         <form id="formFactura" onsubmit="guardarGasto(event,'FACTURA')" style="background:rgba(29,78,216,0.05);border:1.5px solid rgba(29,78,216,0.2);border-radius:var(--r-sm);padding:14px;">
           <div style="font-size:13px;font-weight:900;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;">🧾 Pago de Factura</div>
-          <div class="field"><label for="inpFDesc">Descripción *</label><input type="text" id="inpFDesc" placeholder="Ej: FACTURA COCA COLA" required></div>
-          <div class="field"><label for="inpFMonto">Monto $ *</label><input type="number" step="any" id="inpFMonto" placeholder="0.00" required></div>
+          <div class="field"><label for="inpFDesc">Descripción *</label><input type="text" id="inpFDesc" placeholder="Ej: FACTURA COCA COLA" required=""></div>
+          <div class="field"><label for="inpFMonto">Monto $ *</label><input type="number" step="any" id="inpFMonto" placeholder="0.00" required=""></div>
           <button type="submit" class="btn" style="width:100%;padding:12px;background:var(--blue);color:#fff;font-size:14px;">🧾 AGREGAR FACTURA</button>
         </form>
         <form id="formGastoMens" onsubmit="guardarGasto(event,'GASTO')" style="background:rgba(220,38,38,0.04);border:1.5px solid rgba(220,38,38,0.2);border-radius:var(--r-sm);padding:14px;">
           <div style="font-size:13px;font-weight:900;color:var(--red);margin-bottom:10px;display:flex;align-items:center;gap:6px;">💸 Gasto Mensual</div>
-          <div class="field"><label for="inpGDesc">Descripción *</label><input type="text" id="inpGDesc" placeholder="Ej: LUZ, AGUA, EMPLEADO…" required></div>
-          <div class="field"><label for="inpGMonto">Monto $ *</label><input type="number" step="any" id="inpGMonto" placeholder="0.00" required></div>
+          <div class="field"><label for="inpGDesc">Descripción *</label><input type="text" id="inpGDesc" placeholder="Ej: LUZ, AGUA, EMPLEADO…" required=""></div>
+          <div class="field"><label for="inpGMonto">Monto $ *</label><input type="number" step="any" id="inpGMonto" placeholder="0.00" required=""></div>
           <button type="submit" class="btn btn-danger full" style="background:rgba(220,38,38,0.12);color:var(--red);border:1.5px solid rgba(220,38,38,0.3);">💸 AGREGAR GASTO</button>
         </form>
       </div>
@@ -1056,18 +1156,14 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
 
           <!-- BOTÓN SERVIDOR -->
-          <button id="btnRolServidor" onclick="syncElegirRol('servidor')"
-            style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:14px;padding:20px 12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:center;box-shadow:0 4px 18px rgba(79,70,229,0.4);transition:transform 0.15s;"
-            onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+          <button id="btnRolServidor" onclick="syncElegirRol('servidor')" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:14px;padding:20px 12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:center;box-shadow:0 4px 18px rgba(79,70,229,0.4);transition:transform 0.15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
             <div style="font-size:34px;margin-bottom:8px;">📤</div>
             <div style="font-size:15px;font-weight:900;margin-bottom:4px;">Teléfono #1</div>
             <div style="font-size:11px;opacity:0.9;font-weight:700;line-height:1.4;">Tiene los datos<br>Genera el QR</div>
           </button>
 
           <!-- BOTÓN CLIENTE -->
-          <button id="btnRolCliente" onclick="syncElegirRol('cliente')"
-            style="background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:14px;padding:20px 12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:center;box-shadow:0 4px 18px rgba(3,105,161,0.4);transition:transform 0.15s;"
-            onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+          <button id="btnRolCliente" onclick="syncElegirRol('cliente')" style="background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border:none;border-radius:14px;padding:20px 12px;cursor:pointer;font-family:'Nunito',sans-serif;text-align:center;box-shadow:0 4px 18px rgba(3,105,161,0.4);transition:transform 0.15s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
             <div style="font-size:34px;margin-bottom:8px;">📥</div>
             <div style="font-size:15px;font-weight:900;margin-bottom:4px;">Teléfono #2</div>
             <div style="font-size:11px;opacity:0.9;font-weight:700;line-height:1.4;">Recibirá los datos<br>Escanea el QR</div>
@@ -1150,8 +1246,7 @@
 
         <!-- OPCIÓN 1: Cámara QR -->
         <div style="margin-bottom:10px;">
-          <button id="syncC_btnCamara" onclick="syncAbrirCamara()"
-            style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;box-shadow:0 4px 16px rgba(124,58,237,0.4);display:flex;align-items:center;justify-content:center;gap:10px;">
+          <button id="syncC_btnCamara" onclick="syncAbrirCamara()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;box-shadow:0 4px 16px rgba(124,58,237,0.4);display:flex;align-items:center;justify-content:center;gap:10px;">
             📷 Abrir cámara y escanear QR
           </button>
         </div>
@@ -1159,7 +1254,7 @@
         <!-- Video cámara -->
         <div id="syncC_videoWrap" style="display:none;margin-bottom:12px;">
           <div style="position:relative;border-radius:14px;overflow:hidden;background:#000;max-width:360px;margin:0 auto;">
-            <video id="syncC_video" autoplay playsinline muted style="width:100%;display:block;border-radius:14px;"></video>
+            <video id="syncC_video" autoplay="" playsinline="" muted="" style="width:100%;display:block;border-radius:14px;"></video>
             <canvas id="syncC_canvas" style="display:none;"></canvas>
             <!-- Marco de escaneo -->
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
@@ -1196,8 +1291,7 @@
         <!-- OPCIÓN 3: Archivo JSON -->
         <div>
           <div style="font-size:12px;font-weight:800;color:var(--text-dim);margin-bottom:6px;">📁 Abrir archivo .json recibido:</div>
-          <button onclick="syncAbrirArchivo()"
-            style="background:#f1f5f9;color:#1e293b;border:1.5px solid #cbd5e1;border-radius:10px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <button onclick="syncAbrirArchivo()" style="background:#f1f5f9;color:#1e293b;border:1.5px solid #cbd5e1;border-radius:10px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
             📂 Seleccionar archivo de sync
           </button>
           <input type="file" id="syncC_fileInput" accept=".json" style="display:none;" onchange="syncLeerArchivo(event)">
@@ -1233,7 +1327,7 @@
         <button type="button" onclick="abrirScannerVenta()" title="Escanear código de barras" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#0369a1,#075985);border:none;border-radius:9px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(3,105,161,0.4);transition:transform 0.15s;" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%)'">▦</button>
       </div>
       <div id="sugVenta" class="suggestions"></div>
-      <div id="carVenta" class="cart-list"></div>
+      <div id="carVenta" class="cart-list"><div class="empty"><span class="empty-icon">🛒</span>Carrito vacío — busca un producto arriba</div></div>
       <div class="total-bar"><span class="lbl">Total a cobrar</span><span class="val" id="txtTotal">$0.00</span></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn btn-green xl" style="flex:2;" onclick="abrirCobro()">💳 IR A COBRAR →</button>
@@ -1252,7 +1346,7 @@
       <div class="cobro-monto-box"><div class="lbl">Total a cobrar</div><div class="val" id="cobroMonto">$0.00</div></div>
       <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:2px;font-weight:700;">Ingrese el pago recibido — o deje en blanco si fue cabal</div>
       <div class="efectivo-disp cabal" id="dispEfectivo">CABAL</div>
-      <div class="keypad-num" id="tecladoNum"></div>
+      <div class="keypad-num" id="tecladoNum"><button type="button" class="key-n">7</button><button type="button" class="key-n">8</button><button type="button" class="key-n">9</button><button type="button" class="key-n">4</button><button type="button" class="key-n">5</button><button type="button" class="key-n">6</button><button type="button" class="key-n">1</button><button type="button" class="key-n">2</button><button type="button" class="key-n">3</button><button type="button" class="key-n dot">.</button><button type="button" class="key-n">0</button><button type="button" class="key-n clr">⌫</button></div>
       <div class="vuelto-bar"><span class="lbl">Vuelto</span><span class="val" id="cobroVuelto">$0.00</span></div>
       <div style="display:flex;gap:8px;margin-top:6px;">
         <button class="btn btn-green xl" onclick="finalizarVenta()" style="flex:2;">✔ COBRAR</button>
@@ -1298,7 +1392,7 @@
         <button class="btn btn-green" onclick="seleccionarTodoCodigo()" style="flex:1;">📋 Seleccionar Todo</button>
         <button class="btn btn-info" onclick="descargarCodigoHTML()" style="flex:1;">💾 Descargar .html</button>
       </div>
-      <textarea id="areaCodigo" style="width:100%;height:55vh;font-family:monospace;font-size:11px;border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px;background:#1a1a2e;color:#a8ff78;resize:vertical;line-height:1.5;" readonly spellcheck="false"></textarea>
+      <textarea id="areaCodigo" style="width:100%;height:55vh;font-family:monospace;font-size:11px;border:1.5px solid var(--border-mid);border-radius:var(--r-sm);padding:10px;background:#1a1a2e;color:#a8ff78;resize:vertical;line-height:1.5;" readonly="" spellcheck="false"></textarea>
     </div>
   </div>
 </div>
@@ -1510,8 +1604,9 @@
 <div class="toast" id="toast" aria-live="polite"></div>
 
 <!-- Supabase JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<!-- Sync engine (reemplaza Google Sheets) — debe cargarse ANTES que app.js -->
+<!-- Sync engine Supabase (REST directo, sin SDK externo) -->
+<!-- Supabase JS SDK (compatible con claves sb_publishable_ y eyJ) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <script src="supabase_sync.js"></script>
 <script src="app.js"></script>
 <script src="sync.js"></script>
@@ -1522,7 +1617,7 @@
       <h3>📸 Tomar foto del producto</h3>
       <button class="flip-btn" onclick="flipCamara()" title="Cambiar cámara">🔄 Voltear</button>
     </div>
-    <video id="videoStream" autoplay playsinline muted></video>
+    <video id="videoStream" autoplay="" playsinline="" muted=""></video>
     <canvas id="canvasCaptura" style="display:none;"></canvas>
     <div id="camaraFooter">
       <div class="cam-tip">💡 Coloca el producto sobre un fondo claro y uniforme para mejor resultado al quitar el fondo.</div>
@@ -1555,8 +1650,6 @@
     </div>
   </div>
 </div>
-
-<script src="sync.js"></script>
 
 <!-- ===== MODAL SCANNER CÓDIGO DE BARRAS ===== -->
 <div id="modalScanner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:16px;">
@@ -1627,9 +1720,7 @@
           </div>
           <div class="field" style="margin-bottom:0;">
             <label for="alarmaCategoriaSel">Categoría</label>
-            <select id="alarmaCategoriaSel" style="font-size:13px;padding:8px 10px;background:var(--surface2);">
-              <option value="todas">📦 Todas</option>
-            </select>
+            <select id="alarmaCategoriaSel" style="font-size:13px;padding:8px 10px;background:var(--surface2);"><option value="todas">📦 Todas las categorías</option><option value="ABARROTE">ABARROTE</option><option value="DIANA">DIANA</option><option value="GASEOSAS">GASEOSAS</option></select>
           </div>
         </div>
 
@@ -1746,13 +1837,11 @@
 
       <!-- Sync bidireccional -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button class="btn btn-ghost" style="padding:12px 8px;font-size:12px;font-weight:900;border:1.5px solid var(--green);color:var(--green);"
-          onclick="sheetsImportar()">
+        <button class="btn btn-ghost" style="padding:12px 8px;font-size:12px;font-weight:900;border:1.5px solid var(--green);color:var(--green);" onclick="sheetsImportar()">
           📥 Importar desde nube
           <span style="display:block;font-size:10px;font-weight:700;color:var(--text-muted);margin-top:2px;">Trae datos del otro teléfono</span>
         </button>
-        <button class="btn btn-ghost" style="padding:12px 8px;font-size:12px;font-weight:900;border:1.5px solid #0369a1;color:#0369a1;"
-          onclick="sheetsExportarTodo()">
+        <button class="btn btn-ghost" style="padding:12px 8px;font-size:12px;font-weight:900;border:1.5px solid #0369a1;color:#0369a1;" onclick="sheetsExportarTodo()">
           📤 Exportar todo a nube
           <span style="display:block;font-size:10px;font-weight:700;color:var(--text-muted);margin-top:2px;">Envía inventario + ventas</span>
         </button>
@@ -1762,5 +1851,5 @@
   </div>
 </div>
 
-</body>
-</html>
+
+</body></html>
