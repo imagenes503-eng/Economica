@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#16a34a"/>
+  <title>Foto Pro — Despensa Económica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--g:#16a34a;--gd:#15803d;--gl:#dcfce7;--gm:#bbf7d0;--bd:#bbf7d0;--bg:#f0fdf4;--sf:#fff;--tx:#052e16;--mt:#4b7a5a;--r:16px;--sh:0 2px 12px rgba(22,163,74,.10);--shl:0 8px 32px rgba(22,163,74,.18);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);font-family:'Nunito',sans-serif;font-weight:700;color:var(--tx);min-height:100vh;}
+    nav{background:var(--g);height:56px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(22,163,74,.3);}
+    .logo{font-size:18px;font-weight:900;color:#fff;}
+    .logo span{color:rgba(255,255,255,.6);font-weight:400;}
+    .nbk{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.35);border-radius:9px;color:#fff;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px;}
+    .nbk:hover{background:rgba(255,255,255,.3);}
+    .hero{background:linear-gradient(135deg,#052e16 0%,var(--gd) 60%,var(--g) 100%);padding:28px 20px 24px;text-align:center;color:#fff;}
+    .hbadge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:100px;padding:4px 13px;font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin-bottom:12px;}
+    .hero h1{font-size:22px;font-weight:900;margin-bottom:5px;}
+    .hero p{font-size:12px;color:rgba(255,255,255,.8);font-weight:700;}
+    .main{max-width:920px;margin:0 auto;padding:20px 14px 60px;}
+
+    /* INFO BANNER */
+    .infob{background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;}
+    .infob .ic{font-size:24px;flex-shrink:0;}
+    .infob h3{font-size:14px;font-weight:900;margin-bottom:4px;}
+    .infob p{font-size:12px;color:var(--mt);font-weight:700;line-height:1.5;}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+    .step{background:#fff;border:1.5px solid var(--bd);border-radius:14px;padding:14px 12px;text-align:center;}
+    .step .snum{width:28px;height:28px;border-radius:50%;background:var(--g);color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+    .step h4{font-size:12px;font-weight:900;margin-bottom:3px;}
+    .step p{font-size:11px;color:var(--mt);font-weight:700;}
+
+    /* UPLOAD */
+    .upzone{border:2.5px dashed var(--bd);border-radius:var(--r);background:#fff;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:18px;position:relative;overflow:hidden;}
+    .upzone:hover,.upzone.drag{border-color:var(--g);background:var(--gl);}
+    .upzone .uic{font-size:44px;margin-bottom:10px;}
+    .upzone h3{font-size:16px;font-weight:900;margin-bottom:5px;}
+    .upzone p{font-size:12px;color:var(--mt);font-weight:700;}
+    .upzone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;}
+    .bcam{display:inline-flex;align-items:center;gap:6px;background:var(--g);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;cursor:pointer;margin-top:10px;transition:all .15s;position:relative;z-index:2;}
+    .bcam:hover{background:var(--gd);}
+
+    /* QUEUE */
+    #qs{display:none;margin-bottom:18px;}
+    .stitle{font-size:14px;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .qg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;}
+    .qt{background:#fff;border:1.5px solid var(--bd);border-radius:12px;overflow:hidden;position:relative;}
+    .qt img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+    .qlbl{padding:5px 7px;font-size:10px;font-weight:800;color:var(--mt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .qstat{position:absolute;bottom:0;left:0;right:0;padding:3px 7px;font-size:9px;font-weight:800;text-align:center;}
+    .qstat.p{background:rgba(217,119,6,.9);color:#fff;}
+    .qstat.r{background:rgba(22,163,74,.9);color:#fff;animation:blink 1s infinite;}
+    .qstat.d{background:rgba(22,163,74,.9);color:#fff;}
+    .qstat.e{background:rgba(220,38,38,.9);color:#fff;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.6;}}
+    .qrm{position:absolute;top:4px;right:4px;background:rgba(220,38,38,.85);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* PROCESS BAR */
+    .pbar{background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px;}
+    .pbar .inf{flex:1;min-width:160px;}
+    .pbar .inf h4{font-size:14px;font-weight:900;}
+    .pbar .inf p{font-size:11px;color:var(--mt);font-weight:700;margin-top:2px;}
+    .progw{margin-top:7px;}
+    .prog{height:5px;background:var(--bd);border-radius:3px;overflow:hidden;}
+    .progf{height:100%;background:linear-gradient(90deg,var(--g),#4ade80);border-radius:3px;transition:width .3s;}
+    .progl{font-size:10px;color:var(--mt);font-weight:700;margin-top:4px;}
+    .bproc{background:linear-gradient(135deg,var(--g),var(--gd));color:#fff;border:none;border-radius:11px;padding:12px 24px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(22,163,74,.3);display:flex;align-items:center;gap:7px;}
+    .bproc:hover{filter:brightness(1.07);}
+    .bproc:disabled{background:#ccc;box-shadow:none;cursor:not-allowed;}
+    .bclr{background:none;border:1.5px solid var(--bd);border-radius:10px;padding:10px 14px;color:var(--mt);font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all .15s;}
+    .bclr:hover{border-color:#dc2626;color:#dc2626;}
+
+    /* RESULTS */
+    #rs{display:none;}
+    .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;}
+    @media(max-width:580px){.rg{grid-template-columns:1fr;}}
+    .rc{background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s;}
+    .rc:hover{box-shadow:var(--shl);}
+    .rch{padding:11px 13px 7px;display:flex;align-items:center;justify-content:space-between;}
+    .rcname{font-size:13px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .rcbadge{font-size:10px;font-weight:800;background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 8px;flex-shrink:0;}
+    .cmpw{display:grid;grid-template-columns:1fr 1fr;border-top:1.5px solid var(--bd);border-bottom:1.5px solid var(--bd);position:relative;}
+    .cms{position:relative;}
+    .cms img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#f8f8f8;}
+    .cms.after img{background:#fff;}
+    .cml{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;text-transform:uppercase;}
+    .cdiv{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--g);pointer-events:none;z-index:2;}
+    .cico{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--g);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:3;box-shadow:0 2px 8px rgba(22,163,74,.4);}
+    .rca{padding:11px 13px;display:flex;gap:7px;}
+    .bdl{flex:1;background:var(--g);color:#fff;border:none;border-radius:9px;padding:9px 10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .bdl:hover{background:var(--gd);}
+    .bpos{flex:1;background:var(--gl);color:var(--gd);border:1.5px solid var(--bd);border-radius:9px;padding:9px 10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .bpos:hover{background:var(--gm);}
+    .sbann{background:var(--gl);border-radius:0 0 12px 12px;padding:8px 13px;font-size:11px;font-weight:800;color:var(--gd);display:none;align-items:center;gap:6px;}
+    .sbann.show{display:flex;}
+
+    /* QUALITY SETTINGS */
+    .settings{background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;}
+    .stog{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+    .stog h3{font-size:13px;font-weight:900;display:flex;align-items:center;gap:7px;}
+    .sbody{display:none;margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;}
+    .sopt{border:2px solid var(--bd);border-radius:11px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;}
+    .sopt:hover{border-color:var(--g);}
+    .sopt.on{border-color:var(--g);background:var(--gl);}
+    .sopt .sic{font-size:22px;margin-bottom:4px;}
+    .sopt .sn{font-size:12px;font-weight:900;}
+    .sopt .sd{font-size:10px;color:var(--mt);font-weight:700;margin-top:2px;}
+
+    .spin{width:32px;height:32px;border:4px solid var(--bd);border-top-color:var(--g);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;}
+    @keyframes sp{to{transform:rotate(360deg);}}
+
+    .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:800;z-index:900;transition:transform .3s cubic-bezier(.22,1,.36,1);white-space:nowrap;pointer-events:none;}
+    .toast.show{transform:translateX(-50%) translateY(0);}
+    .toast.ok{background:var(--g);}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">📸 Foto<span> Pro</span></div>
+  <a href="index.html" class="nbk">← Volver al POS</a>
+</nav>
+
+<div class="hero">
+  <div class="hbadge">✨ Fondo Blanco · Calidad Catálogo · Sin conexión</div>
+  <h1>Editor de Fotos Profesional</h1>
+  <p>Convierte tus fotos de celular en imágenes de supermercado — funciona sin internet</p>
+</div>
+
+<div class="main">
+
+  <!-- HOW IT WORKS -->
+  <div class="steps">
+    <div class="step"><div class="snum">1</div><h4>Sube la foto</h4><p>Desde galería o cámara</p></div>
+    <div class="step"><div class="snum">2</div><h4>Elige calidad</h4><p>Estándar o máxima</p></div>
+    <div class="step"><div class="snum">3</div><h4>Procesar</h4><p>Fondo blanco + mejoras</p></div>
+    <div class="step"><div class="snum">4</div><h4>Usar en POS</h4><p>Se guarda al inventario</p></div>
+  </div>
+
+  <!-- QUALITY SETTINGS -->
+  <div class="settings">
+    <div style="font-size:13px;font-weight:900;margin-bottom:12px;">⚙️ Configuración de mejora</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;">
+      <div class="sopt on" id="opt-std" onclick="selOpt('std')"><div class="sic">⚡</div><div class="sn">Estándar</div><div class="sd">Rápido · 600px</div></div>
+      <div class="sopt" id="opt-hd" onclick="selOpt('hd')"><div class="sic">🌟</div><div class="sn">Alta Calidad</div><div class="sd">Lento · 900px</div></div>
+      <div class="sopt" id="opt-max" onclick="selOpt('max')"><div class="sic">💎</div><div class="sn">Máxima</div><div class="sd">Muy lento · 1200px</div></div>
+      <div class="sopt" id="opt-bg" onclick="selOpt('bg')"><div class="sic">🟦</div><div class="sn">Fondo Color</div><div class="sd">Verde claro</div></div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upzone" id="uz" ondrop="onDrop(event)" ondragover="onDrag(event)" ondragleave="onDL()">
+    <input type="file" id="fi" accept="image/*" multiple onchange="onFiles(event)"/>
+    <div class="uic">📷</div>
+    <h3>Arrastra tus fotos aquí</h3>
+    <p>O haz clic para seleccionar · JPG PNG WEBP</p>
+    <button class="bcam" onclick="openCam(event)">📱 Tomar Foto con Cámara</button>
+    <input type="file" id="ci" accept="image/*" capture="environment" style="display:none" onchange="onFiles(event)"/>
+  </div>
+
+  <!-- QUEUE -->
+  <div id="qs">
+    <div class="stitle">🖼️ Fotos en cola <span id="qc" style="background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 9px;font-size:11px;"></span></div>
+    <div class="qg" id="qg"></div>
+    <div class="pbar" style="margin-top:14px;">
+      <div class="inf"><h4 id="ph">Listo para procesar</h4><p id="ps">Elige calidad arriba y procesa tus fotos</p>
+        <div class="progw" id="pw" style="display:none;"><div class="prog"><div class="progf" id="pf" style="width:0%"></div></div><div class="progl" id="pl"></div></div>
+      </div>
+      <button class="bclr" onclick="clearQ()" id="bclr">🗑 Limpiar</button>
+      <button class="bproc" onclick="procAll()" id="bproc">✨ Mejorar Fotos</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="rs">
+    <div class="stitle" style="margin-bottom:14px;">✅ Fotos Mejoradas <span id="rc" style="background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 9px;font-size:11px;"></span></div>
+    <div class="rg" id="rg"></div>
+    <div style="margin-top:14px;text-align:center;">
+      <button class="bclr" onclick="clearRes()" style="padding:11px 22px;">🗑 Limpiar resultados</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Quality settings ──────────────────────────────────
+const QUALITY={
+  std: {size:600,contrast:1.08,brightness:6,shadow:22,shadowY:12,sharpen:true,bgColor:'#FFFFFF',label:'Estándar'},
+  hd:  {size:900,contrast:1.10,brightness:5,shadow:30,shadowY:16,sharpen:true,bgColor:'#FFFFFF',label:'Alta Calidad'},
+  max: {size:1200,contrast:1.12,brightness:4,shadow:36,shadowY:20,sharpen:true,bgColor:'#FFFFFF',label:'Máxima'},
+  bg:  {size:800,contrast:1.08,brightness:5,shadow:24,shadowY:13,sharpen:true,bgColor:'#e8f5e9',label:'Fondo Verde'},
+};
+let qualOpt='std';
+function selOpt(o){qualOpt=o;['std','hd','max','bg'].forEach(k=>document.getElementById('opt-'+k).classList.toggle('on',k===o));}
+
+// ─── State ────────────────────────────────────────────
+let queue=[], results=[];
+
+// ─── Drag & Drop ──────────────────────────────────────
+function onDrag(e){e.preventDefault();document.getElementById('uz').classList.add('drag');}
+function onDL(){document.getElementById('uz').classList.remove('drag');}
+function onDrop(e){e.preventDefault();document.getElementById('uz').classList.remove('drag');handleFiles(e.dataTransfer.files);}
+function onFiles(e){handleFiles(e.target.files);e.target.value='';}
+function openCam(e){e.stopPropagation();document.getElementById('ci').click();}
+
+function handleFiles(files){
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const id='q'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+    const r=new FileReader();
+    r.onload=e=>{queue.push({id,file:f,name:f.name.replace(/\.[^.]+$/,''),src:e.target.result,status:'p',result:null});renderQ();};
+    r.readAsDataURL(f);
+  });
+}
+
+// ─── Render queue ─────────────────────────────────────
+function renderQ(){
+  const s=document.getElementById('qs'),g=document.getElementById('qg'),c=document.getElementById('qc');
+  if(!queue.length){s.style.display='none';return;}
+  s.style.display='block';
+  c.textContent=queue.length+' foto'+(queue.length!==1?'s':'');
+  const labels={p:'En espera',r:'⚙️ Procesando…',d:'✅ Listo',e:'❌ Error'};
+  g.innerHTML=queue.map(it=>`<div class="qt" id="qt-${it.id}"><img src="${it.src}"><div class="qlbl">${it.name}</div><div class="qstat ${it.status}">${labels[it.status]}</div>${it.status==='p'?`<button class="qrm" onclick="rmQ('${it.id}')">✕</button>`:''}</div>`).join('');
+}
+function rmQ(id){queue=queue.filter(i=>i.id!==id);renderQ();}
+function clearQ(){queue=queue.filter(i=>i.status==='r');renderQ();}
+
+// ─── Process ──────────────────────────────────────────
+let proc=false;
+async function procAll(){
+  if(proc)return;
+  const pend=queue.filter(i=>i.status==='p');
+  if(!pend.length){toast('No hay fotos en espera');return;}
+  proc=true;
+  document.getElementById('bproc').disabled=true;
+  document.getElementById('bclr').disabled=true;
+  document.getElementById('pw').style.display='block';
+  let done=0;
+  for(const it of pend){
+    it.status='r';renderQ();
+    setP(done,pend.length,'Procesando '+it.name+'…');
+    try{
+      const url=await procesarImg(it.src,QUALITY[qualOpt]);
+      it.status='d';it.result=url;results.unshift({...it});
+    }catch(e){it.status='e';it.err=e.message;}
+    done++;renderQ();
+  }
+  setP(done,pend.length,'✅ '+done+' foto'+(done!==1?'s':'')+' procesada'+(done!==1?'s':''));
+  proc=false;
+  document.getElementById('bproc').disabled=false;
+  document.getElementById('bclr').disabled=false;
+  setTimeout(()=>{queue=queue.filter(i=>i.status!=='d');renderQ();},1000);
+  renderRes();
+  toast('✅ '+done+' fotos mejoradas',true);
+}
+
+function setP(done,total,lbl){
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('pl').textContent=lbl;
+}
+
+// ─── Core Image Processing ────────────────────────────
+function procesarImg(src,cfg){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      try{
+        const S=cfg.size;
+        const c=document.createElement('canvas');
+        c.width=S;c.height=S;
+        const ctx=c.getContext('2d');
+
+        // 1. Background
+        ctx.fillStyle=cfg.bgColor;
+        ctx.fillRect(0,0,S,S);
+
+        // 2. Calculate centered placement with padding
+        const PAD=S*0.07;
+        const mw=S-PAD*2,mh=S-PAD*2;
+        const sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+        const asp=sw/sh;
+        let dw,dh;
+        if(asp>1){dw=mw;dh=mw/asp;}else{dh=mh;dw=mh*asp;}
+        const dx=(S-dw)/2,dy=(S-dh)/2;
+
+        // 3. Drop shadow pass
+        ctx.save();
+        ctx.shadowColor='rgba(0,0,0,0.13)';
+        ctx.shadowBlur=cfg.shadow;
+        ctx.shadowOffsetX=0;
+        ctx.shadowOffsetY=cfg.shadowY;
+        ctx.drawImage(img,dx,dy,dw,dh);
+        ctx.restore();
+
+        // 4. Product on top (clean)
+        ctx.drawImage(img,dx,dy,dw,dh);
+
+        // 5. Studio light from top-left
+        if(cfg.bgColor==='#FFFFFF'){
+          const lg=ctx.createRadialGradient(S*.15,S*.05,0,S*.15,S*.05,S*.75);
+          lg.addColorStop(0,'rgba(255,255,255,.28)');
+          lg.addColorStop(0.55,'rgba(255,255,255,.0)');
+          ctx.fillStyle=lg;ctx.fillRect(0,0,S,S);
+          // Soft white vignette edge
+          const vg=ctx.createRadialGradient(S/2,S/2,S*.35,S/2,S/2,S*.72);
+          vg.addColorStop(0,'rgba(255,255,255,0)');
+          vg.addColorStop(1,'rgba(255,255,255,.15)');
+          ctx.fillStyle=vg;ctx.fillRect(0,0,S,S);
+        }
+
+        // 6. Sharpen & color boost via pixel manipulation
+        if(cfg.sharpen){
+          const id=ctx.getImageData(0,0,S,S);
+          const d=id.data;
+          const con=cfg.contrast,br=cfg.brightness;
+          const sat=1.12; // slight saturation boost
+          for(let i=0;i<d.length;i+=4){
+            // Skip near-white pixels (preserve background)
+            if(d[i]>248&&d[i+1]>248&&d[i+2]>248)continue;
+            // Contrast + brightness
+            let r=(d[i]-128)*con+128+br;
+            let g=(d[i+1]-128)*con+128+br;
+            let b=(d[i+2]-128)*con+128+br;
+            // Saturation boost
+            const avg=(r+g+b)/3;
+            r=avg+(r-avg)*sat;
+            g=avg+(g-avg)*sat;
+            b=avg+(b-avg)*sat;
+            d[i]=Math.min(255,Math.max(0,r));
+            d[i+1]=Math.min(255,Math.max(0,g));
+            d[i+2]=Math.min(255,Math.max(0,b));
+          }
+          ctx.putImageData(id,0,0);
+        }
+
+        // 7. Sharpness kernel (unsharp mask simulation)
+        if(cfg.size>=900){
+          const id2=ctx.getImageData(0,0,S,S);
+          const d2=id2.data,w=S;
+          const kernel=[-0,-1,0,-1,5,-1,0,-1,0]; // simple sharpen kernel
+          const tmp=new Uint8ClampedArray(d2);
+          for(let y=1;y<S-1;y++){for(let x=1;x<S-1;x++){
+            const idx=(y*w+x)*4;
+            // Skip near-white
+            if(tmp[idx]>245&&tmp[idx+1]>245&&tmp[idx+2]>245)continue;
+            for(let ch=0;ch<3;ch++){
+              let v=0;
+              for(let ky=-1;ky<=1;ky++){for(let kx=-1;kx<=1;kx++){
+                const si=((y+ky)*w+(x+kx))*4+ch;
+                v+=tmp[si]*kernel[(ky+1)*3+(kx+1)];
+              }}
+              d2[idx+ch]=Math.min(255,Math.max(0,v));
+            }
+          }}
+          ctx.putImageData(id2,0,0);
+        }
+
+        res(c.toDataURL('image/jpeg',0.94));
+      }catch(e){rej(e);}
+    };
+    img.onerror=()=>rej(new Error('No se pudo cargar la imagen'));
+    img.src=src;
+  });
+}
+
+// ─── Render results ───────────────────────────────────
+function renderRes(){
+  const s=document.getElementById('rs'),g=document.getElementById('rg'),c=document.getElementById('rc');
+  if(!results.length){s.style.display='none';return;}
+  s.style.display='block';
+  c.textContent=results.length+' foto'+(results.length!==1?'s':'');
+  g.innerHTML=results.map((it,i)=>{
+    if(it.err)return`<div style="background:#fff5f5;border:1.5px solid #fecaca;border-radius:var(--r);padding:18px;text-align:center;color:#dc2626;font-size:13px;font-weight:700;"><div style="font-size:28px;margin-bottom:6px;">❌</div><b>${it.name}</b><br><span style="color:#7f1d1d;">${it.err}</span></div>`;
+    return`<div class="rc">
+      <div class="rch"><div class="rcname">${it.name}</div><div class="rcbadge">✅ Pro</div></div>
+      <div class="cmpw" style="position:relative;">
+        <div class="cms"><img src="${it.src}"><div class="cml">ANTES</div></div>
+        <div class="cms after"><img src="${it.result}"><div class="cml">DESPUÉS</div></div>
+        <div class="cdiv"></div><div class="cico">↔</div>
+      </div>
+      <div class="rca">
+        <button class="bdl" onclick="dl(${i})">⬇️ Descargar</button>
+        <button class="bpos" onclick="usarPOS(${i})">📦 Usar en POS</button>
+      </div>
+      <div class="sbann" id="sb-${i}">✅ ¡Guardada! Ábrela en el inventario del POS.</div>
+    </div>`;
+  }).join('');
+}
+
+function dl(i){
+  const it=results[i];const a=document.createElement('a');
+  a.href=it.result;a.download=it.name+'_pro.jpg';a.click();
+  toast('⬇️ Descargando…',true);
+}
+
+async function usarPOS(i){
+  const it=results[i];
+  try{
+    const db=await new Promise((res,rej)=>{const r=indexedDB.open('DespensaEconomicaDB',2);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');};});
+    await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');const r=tx.objectStore('kv').put({dataUrl:it.result,name:it.name,ts:Date.now()},'fotopro_pendiente');r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
+    document.getElementById('sb-'+i).classList.add('show');
+    toast('✅ Guardada — ábrela en Inventario → Editar producto',true);
+  }catch(e){toast('Error: '+e.message);}
+}
+
+function clearRes(){results=[];renderRes();}
+
+// ─── Toast ────────────────────────────────────────────
+let _tt;
+function toast(m,ok=false){const e=document.getElementById('toast');e.textContent=m;e.className='toast show'+(ok?' ok':'');clearTimeout(_tt);_tt=setTimeout(()=>e.className='toast',2800);}
+</script>
+</body>
+</html>
