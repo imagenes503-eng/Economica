@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#16a34a"/>
+  <title>Foto Pro — Despensa Económica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--g:#16a34a;--gd:#15803d;--gl:#dcfce7;--gm:#bbf7d0;--bd:#bbf7d0;--bg:#f0fdf4;--sf:#fff;--tx:#052e16;--mt:#4b7a5a;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);font-family:'Nunito',sans-serif;font-weight:700;color:var(--tx);min-height:100vh;}
+    nav{background:var(--g);height:56px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(22,163,74,.3);}
+    .logo{font-size:18px;font-weight:900;color:#fff;}.logo span{color:rgba(255,255,255,.6);font-weight:400;}
+    .nbk{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.35);border-radius:9px;color:#fff;padding:7px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px;}
+    .nbk:hover{background:rgba(255,255,255,.3);}
+    .hero{background:linear-gradient(135deg,#052e16 0%,var(--gd) 60%,var(--g) 100%);padding:26px 20px 22px;text-align:center;color:#fff;}
+    .hb{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:100px;padding:4px 12px;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin-bottom:10px;}
+    .hero h1{font-size:21px;font-weight:900;margin-bottom:4px;}
+    .hero p{font-size:12px;color:rgba(255,255,255,.8);font-weight:700;}
+    .main{max-width:860px;margin:0 auto;padding:18px 14px 60px;}
+
+    /* UPLOAD SECTION */
+    .upload-sec{background:#fff;border:1.5px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:16px;}
+    .upload-sec h3{font-size:14px;font-weight:900;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+    .upload-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .ubtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 12px;border-radius:14px;border:2.5px dashed var(--bd);background:var(--bg);cursor:pointer;transition:all .2s;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--mt);}
+    .ubtn:hover{border-color:var(--g);background:var(--gl);color:var(--g);}
+    .ubtn .ui{font-size:32px;margin-bottom:2px;}
+    .ubtn.active{border-color:var(--g);background:var(--gl);color:var(--g);}
+    /* drag zone */
+    .dragzone{border:2px dashed var(--bd);border-radius:12px;padding:14px;text-align:center;font-size:12px;color:var(--mt);font-weight:700;transition:all .2s;}
+    .dragzone.drag{border-color:var(--g);background:var(--gl);}
+    /* Hidden file inputs */
+    input[type=file]{display:none;}
+
+    /* QUALITY SETTINGS */
+    .qset{background:#fff;border:1.5px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:16px;}
+    .qset h3{font-size:14px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+    .qopts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+    @media(min-width:500px){.qopts{grid-template-columns:repeat(4,1fr);}}
+    .qo{border:2px solid var(--bd);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .15s;background:#fff;}
+    .qo:hover{border-color:var(--g);background:var(--gl);}
+    .qo.on{border-color:var(--g);background:var(--gl);}
+    .qo .qi{font-size:22px;margin-bottom:3px;}
+    .qo .qn{font-size:12px;font-weight:900;}
+    .qo .qd{font-size:10px;color:var(--mt);font-weight:700;margin-top:2px;line-height:1.3;}
+    /* Quality preview strip */
+    .qprev{margin-top:12px;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:11px;font-weight:700;color:var(--mt);}
+    .qprev b{color:var(--tx);}
+
+    /* QUEUE */
+    #qs{display:none;margin-bottom:16px;}
+    .stitle{font-size:14px;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .qg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+    .qt{background:#fff;border:1.5px solid var(--bd);border-radius:12px;overflow:hidden;position:relative;}
+    .qt img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+    .qlbl{padding:5px 7px;font-size:10px;font-weight:800;color:var(--mt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .qstat{position:absolute;bottom:0;left:0;right:0;padding:3px 6px;font-size:9px;font-weight:800;text-align:center;}
+    .qstat.p{background:rgba(217,119,6,.9);color:#fff;}
+    .qstat.r{background:rgba(22,163,74,.9);color:#fff;animation:blink 1s infinite;}
+    .qstat.d{background:rgba(22,163,74,.9);color:#fff;}
+    .qstat.e{background:rgba(220,38,38,.9);color:#fff;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+    .qrm{position:absolute;top:4px;right:4px;background:rgba(220,38,38,.85);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* PROCESS BAR */
+    .pbar{background:#fff;border:1.5px solid var(--bd);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
+    .pbar .inf{flex:1;min-width:150px;}
+    .pbar .inf h4{font-size:14px;font-weight:900;}
+    .pbar .inf p{font-size:11px;color:var(--mt);font-weight:700;margin-top:2px;}
+    .progw{margin-top:7px;}
+    .prog{height:5px;background:var(--bd);border-radius:3px;overflow:hidden;}
+    .progf{height:100%;background:linear-gradient(90deg,var(--g),#4ade80);border-radius:3px;transition:width .3s;}
+    .progl{font-size:10px;color:var(--mt);font-weight:700;margin-top:4px;}
+    .bproc{background:linear-gradient(135deg,var(--g),var(--gd));color:#fff;border:none;border-radius:11px;padding:12px 22px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:all .15s;box-shadow:0 4px 14px rgba(22,163,74,.3);display:flex;align-items:center;gap:7px;}
+    .bproc:hover{filter:brightness(1.07);}
+    .bproc:disabled{background:#ccc;box-shadow:none;cursor:not-allowed;}
+    .bclr{background:none;border:1.5px solid var(--bd);border-radius:10px;padding:10px 14px;color:var(--mt);font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer;transition:all .15s;}
+    .bclr:hover{border-color:#dc2626;color:#dc2626;}
+
+    /* RESULTS */
+    #rs{display:none;}
+    .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+    @media(max-width:560px){.rg{grid-template-columns:1fr;}}
+    .rc{background:#fff;border:1.5px solid var(--bd);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(22,163,74,.10);transition:box-shadow .15s;}
+    .rc:hover{box-shadow:0 8px 32px rgba(22,163,74,.18);}
+    .rch{padding:11px 13px 7px;display:flex;align-items:center;justify-content:space-between;}
+    .rcname{font-size:13px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .rcbadge{font-size:10px;font-weight:800;background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 8px;flex-shrink:0;}
+    /* compare */
+    .cmpw{display:grid;grid-template-columns:1fr 1fr;border-top:1.5px solid var(--bd);border-bottom:1.5px solid var(--bd);position:relative;}
+    .cms{position:relative;}
+    .cms img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#f5f5f5;}
+    .cms.after img{background:#fff;}
+    .cml{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:2px 6px;text-transform:uppercase;}
+    .cdiv{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--g);z-index:2;}
+    .cico{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--g);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:3;box-shadow:0 2px 8px rgba(22,163,74,.4);}
+    .rca{padding:11px 13px;display:flex;gap:7px;}
+    .bdl{flex:1;background:var(--g);color:#fff;border:none;border-radius:9px;padding:9px;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .bdl:hover{background:var(--gd);}
+    .bpos{flex:1;background:var(--gl);color:var(--gd);border:1.5px solid var(--bd);border-radius:9px;padding:9px;font-family:'Nunito',sans-serif;font-weight:900;font-size:12px;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .bpos:hover{background:var(--gm);}
+    .sbann{background:var(--gl);padding:8px 13px;font-size:11px;font-weight:800;color:var(--gd);display:none;align-items:center;gap:6px;}
+    .sbann.show{display:flex;}
+
+    .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:800;z-index:900;transition:transform .3s cubic-bezier(.22,1,.36,1);white-space:nowrap;pointer-events:none;}
+    .toast.show{transform:translateX(-50%) translateY(0);}
+    .toast.ok{background:var(--g);}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">📸 Foto<span> Pro</span></div>
+  <a href="index.html" class="nbk">← Volver al POS</a>
+</nav>
+
+<div class="hero">
+  <div class="hb">✨ Fondo Blanco · Studio · Sin Internet</div>
+  <h1>Editor de Fotos Profesional</h1>
+  <p>Transforma fotos de celular en imágenes de catálogo</p>
+</div>
+
+<!-- Hidden file inputs (separated from buttons to avoid camera conflict) -->
+<input type="file" id="fi-gallery" accept="image/*" multiple onchange="onFiles(event,'gallery')"/>
+<input type="file" id="fi-camera"  accept="image/*" capture="environment" onchange="onFiles(event,'camera')"/>
+
+<div class="main">
+
+  <!-- UPLOAD SECTION -->
+  <div class="upload-sec">
+    <h3>📁 Agregar Fotos</h3>
+    <div class="upload-btns">
+      <button class="ubtn" onclick="document.getElementById('fi-gallery').click()">
+        <div class="ui">🖼️</div>
+        Subir desde Galería
+        <div style="font-size:10px;color:var(--mt);font-weight:700;">JPG · PNG · WEBP · Múltiples</div>
+      </button>
+      <button class="ubtn" onclick="document.getElementById('fi-camera').click()">
+        <div class="ui">📷</div>
+        Tomar Foto con Cámara
+        <div style="font-size:10px;color:var(--mt);font-weight:700;">Abre la cámara directamente</div>
+      </button>
+    </div>
+    <div class="dragzone" id="dz" ondrop="onDrop(event)" ondragover="onDrag(event)" ondragleave="onDL()">
+      🖱️ O arrastra imágenes aquí
+    </div>
+  </div>
+
+  <!-- QUALITY SETTINGS -->
+  <div class="qset">
+    <h3>⚙️ Tipo de mejora</h3>
+    <div class="qopts">
+      <div class="qo" id="opt-rapido" onclick="selQ('rapido')">
+        <div class="qi">⚡</div>
+        <div class="qn">Rápido</div>
+        <div class="qd">Solo centra y comprime</div>
+      </div>
+      <div class="qo on" id="opt-catalogo" onclick="selQ('catalogo')">
+        <div class="qi">🏪</div>
+        <div class="qn">Catálogo</div>
+        <div class="qd">Fondo blanco + luz suave</div>
+      </div>
+      <div class="qo" id="opt-vibrante" onclick="selQ('vibrante')">
+        <div class="qi">🎨</div>
+        <div class="qn">Vibrante</div>
+        <div class="qd">Colores intensos + contraste</div>
+      </div>
+      <div class="qo" id="opt-verde" onclick="selQ('verde')">
+        <div class="qi">🌿</div>
+        <div class="qn">Fondo Verde</div>
+        <div class="qd">Fondo marca Despensa</div>
+      </div>
+    </div>
+    <div class="qprev" id="qprev">
+      <b>Catálogo:</b> Fondo blanco puro, centra el producto, iluminación de estudio suave, sombra natural, colores reales. Ideal para tienda online.
+    </div>
+  </div>
+
+  <!-- QUEUE -->
+  <div id="qs">
+    <div class="stitle">🖼️ Fotos en cola <span id="qc" style="background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 9px;font-size:11px;"></span></div>
+    <div class="qg" id="qg"></div>
+    <div class="pbar" style="margin-top:14px;">
+      <div class="inf">
+        <h4 id="ph">Listo para mejorar</h4>
+        <p id="ps">Elige el tipo de mejora y presiona el botón</p>
+        <div class="progw" id="pw" style="display:none;">
+          <div class="prog"><div class="progf" id="pf" style="width:0%"></div></div>
+          <div class="progl" id="pl"></div>
+        </div>
+      </div>
+      <button class="bclr" onclick="clearQ()" id="bclr">🗑 Limpiar</button>
+      <button class="bproc" onclick="procAll()" id="bproc">✨ Mejorar Fotos</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="rs">
+    <div class="stitle" style="margin-bottom:14px;">
+      ✅ Fotos Mejoradas
+      <span id="rc" style="background:var(--gl);color:var(--gd);border-radius:100px;padding:2px 9px;font-size:11px;"></span>
+    </div>
+    <div class="rg" id="rg"></div>
+    <div style="margin-top:14px;text-align:center;">
+      <button class="bclr" onclick="clearRes()" style="padding:11px 22px;">🗑 Limpiar resultados</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Quality presets ─────────────────────────────────────────────────────────
+// Each preset defines WHAT the processing does — visibly different results
+const Q = {
+  rapido: {
+    size: 400, bgColor: null, // no bg change
+    contrast: 1.0, brightness: 0, saturation: 1.0,
+    shadow: false, studioLight: false, sharpen: false,
+    desc: 'Solo centra el producto y lo comprime. Sin cambios de color ni fondo.'
+  },
+  catalogo: {
+    size: 600, bgColor: '#FFFFFF',
+    contrast: 1.08, brightness: 5, saturation: 1.08,
+    shadow: true, shadowAlpha: 0.13, shadowBlur: 24, shadowY: 14,
+    studioLight: true, sharpen: false,
+    desc: 'Fondo blanco puro, centra el producto, iluminación de estudio suave, sombra natural, colores reales. Ideal para tienda online.'
+  },
+  vibrante: {
+    size: 600, bgColor: '#FFFFFF',
+    contrast: 1.20, brightness: 8, saturation: 1.35,
+    shadow: true, shadowAlpha: 0.18, shadowBlur: 28, shadowY: 16,
+    studioLight: true, sharpen: true,
+    desc: 'Colores muy intensos, máximo contraste, fondo blanco. Los productos se ven llamativos y brillantes.'
+  },
+  verde: {
+    size: 600, bgColor: '#E8F5E9',
+    contrast: 1.10, brightness: 4, saturation: 1.12,
+    shadow: true, shadowAlpha: 0.12, shadowBlur: 20, shadowY: 12,
+    studioLight: false, sharpen: false,
+    desc: 'Fondo verde claro (color de marca Despensa Económica), centra el producto con sombra suave.'
+  }
+};
+
+let qualSel = 'catalogo';
+let queue = [], results = [];
+
+function selQ(k) {
+  qualSel = k;
+  Object.keys(Q).forEach(x => document.getElementById('opt-' + x).classList.toggle('on', x === k));
+  document.getElementById('qprev').innerHTML = `<b>${document.querySelector('#opt-'+k+' .qn').textContent}:</b> ${Q[k].desc}`;
+}
+
+// ─── File handling ───────────────────────────────────────────────────────────
+function onDrag(e) { e.preventDefault(); document.getElementById('dz').classList.add('drag'); }
+function onDL()    { document.getElementById('dz').classList.remove('drag'); }
+function onDrop(e) {
+  e.preventDefault(); document.getElementById('dz').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+function onFiles(e, src) {
+  handleFiles(e.target.files);
+  e.target.value = '';
+}
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const id = 'q' + Date.now() + '_' + Math.random().toString(36).slice(2,5);
+    const r = new FileReader();
+    r.onload = ev => {
+      queue.push({ id, name: f.name.replace(/\.[^.]+$/, ''), src: ev.target.result, status: 'p', result: null });
+      renderQ();
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+// ─── Queue render ────────────────────────────────────────────────────────────
+function renderQ() {
+  const s = document.getElementById('qs');
+  if (!queue.length) { s.style.display = 'none'; return; }
+  s.style.display = 'block';
+  document.getElementById('qc').textContent = queue.length + (queue.length !== 1 ? ' fotos' : ' foto');
+  const lbl = { p: 'En espera', r: '⚙️ Procesando…', d: '✅ Listo', e: '❌ Error' };
+  document.getElementById('qg').innerHTML = queue.map(it =>
+    `<div class="qt" id="qt-${it.id}">
+      <img src="${it.src}">
+      <div class="qlbl">${it.name}</div>
+      <div class="qstat ${it.status}">${lbl[it.status]}</div>
+      ${it.status === 'p' ? `<button class="qrm" onclick="rmQ('${it.id}')">✕</button>` : ''}
+    </div>`
+  ).join('');
+}
+function rmQ(id) { queue = queue.filter(i => i.id !== id); renderQ(); }
+function clearQ() { queue = queue.filter(i => i.status === 'r'); renderQ(); }
+
+// ─── Process all ────────────────────────────────────────────────────────────
+let proc = false;
+async function procAll() {
+  if (proc) return;
+  const pend = queue.filter(i => i.status === 'p');
+  if (!pend.length) { toast('No hay fotos en espera'); return; }
+  proc = true;
+  document.getElementById('bproc').disabled = true;
+  document.getElementById('bclr').disabled = true;
+  document.getElementById('pw').style.display = 'block';
+  let done = 0;
+  for (const it of pend) {
+    it.status = 'r'; renderQ();
+    setP(done, pend.length, 'Procesando ' + it.name + '…');
+    try {
+      const url = await procesarImg(it.src, Q[qualSel]);
+      it.status = 'd'; it.result = url;
+      results.unshift({ ...it, preset: qualSel });
+    } catch(e) { it.status = 'e'; it.err = e.message; }
+    done++; renderQ();
+  }
+  setP(done, pend.length, '✅ ' + done + (done !== 1 ? ' fotos procesadas' : ' foto procesada'));
+  proc = false;
+  document.getElementById('bproc').disabled = false;
+  document.getElementById('bclr').disabled = false;
+  setTimeout(() => { queue = queue.filter(i => i.status !== 'd'); renderQ(); }, 900);
+  renderRes();
+  toast('✅ ' + done + ' fotos mejoradas', true);
+}
+function setP(done, total, lbl) {
+  document.getElementById('pf').style.width = (total > 0 ? Math.round(done / total * 100) : 0) + '%';
+  document.getElementById('pl').textContent = lbl;
+}
+
+// ─── Core image processing — each preset looks VISIBLY DIFFERENT ─────────────
+function procesarImg(src, cfg) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const S = cfg.size;
+        const c = document.createElement('canvas');
+        c.width = S; c.height = S;
+        const ctx = c.getContext('2d');
+
+        // 1. Background
+        if (cfg.bgColor) {
+          ctx.fillStyle = cfg.bgColor;
+        } else {
+          // No background change — use white
+          ctx.fillStyle = '#FFFFFF';
+        }
+        ctx.fillRect(0, 0, S, S);
+
+        // 2. Center product with padding
+        const PAD = S * 0.07;
+        const mw = S - PAD * 2, mh = S - PAD * 2;
+        const sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+        const asp = sw / sh;
+        let dw, dh;
+        if (asp > 1) { dw = mw; dh = mw / asp; }
+        else          { dh = mh; dw = mh * asp; }
+        const dx = (S - dw) / 2, dy = (S - dh) / 2;
+
+        // 3. Drop shadow (only if enabled)
+        if (cfg.shadow) {
+          ctx.save();
+          ctx.shadowColor = `rgba(0,0,0,${cfg.shadowAlpha})`;
+          ctx.shadowBlur = cfg.shadowBlur;
+          ctx.shadowOffsetY = cfg.shadowY;
+          ctx.drawImage(img, dx, dy, dw, dh);
+          ctx.restore();
+        }
+
+        // 4. Product clean
+        ctx.drawImage(img, dx, dy, dw, dh);
+
+        // 5. Studio light overlay (only for catalog/vibrante)
+        if (cfg.studioLight) {
+          const lg = ctx.createRadialGradient(S * 0.15, S * 0.05, 0, S * 0.15, S * 0.05, S * 0.78);
+          lg.addColorStop(0, 'rgba(255,255,255,0.30)');
+          lg.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+          lg.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = lg; ctx.fillRect(0, 0, S, S);
+          // Soft vignette on edges
+          const vg = ctx.createRadialGradient(S/2, S/2, S*0.32, S/2, S/2, S*0.72);
+          vg.addColorStop(0, 'rgba(255,255,255,0)');
+          vg.addColorStop(1, 'rgba(255,255,255,0.18)');
+          ctx.fillStyle = vg; ctx.fillRect(0, 0, S, S);
+        }
+
+        // 6. Pixel-level color correction (contrast, brightness, saturation)
+        if (cfg.contrast !== 1.0 || cfg.brightness !== 0 || cfg.saturation !== 1.0) {
+          const id = ctx.getImageData(0, 0, S, S);
+          const d = id.data;
+          const con = cfg.contrast, br = cfg.brightness, sat = cfg.saturation;
+          for (let i = 0; i < d.length; i += 4) {
+            // Don't touch near-white background pixels
+            if (cfg.bgColor && d[i] > 248 && d[i+1] > 248 && d[i+2] > 248) continue;
+            let r = d[i], g = d[i+1], b = d[i+2];
+            // Contrast + brightness
+            r = (r - 128) * con + 128 + br;
+            g = (g - 128) * con + 128 + br;
+            b = (b - 128) * con + 128 + br;
+            // Saturation
+            const avg = (r + g + b) / 3;
+            r = avg + (r - avg) * sat;
+            g = avg + (g - avg) * sat;
+            b = avg + (b - avg) * sat;
+            d[i]   = Math.min(255, Math.max(0, r));
+            d[i+1] = Math.min(255, Math.max(0, g));
+            d[i+2] = Math.min(255, Math.max(0, b));
+          }
+          ctx.putImageData(id, 0, 0);
+        }
+
+        // 7. Sharpen kernel (only for vibrante)
+        if (cfg.sharpen) {
+          const id2 = ctx.getImageData(0, 0, S, S);
+          const d2 = id2.data, w = S;
+          const tmp = new Uint8ClampedArray(d2);
+          const kern = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+          for (let y = 1; y < S - 1; y++) {
+            for (let x = 1; x < S - 1; x++) {
+              const idx = (y * w + x) * 4;
+              if (tmp[idx] > 246 && tmp[idx+1] > 246 && tmp[idx+2] > 246) continue;
+              for (let ch = 0; ch < 3; ch++) {
+                let v = 0;
+                for (let ky = -1; ky <= 1; ky++) {
+                  for (let kx = -1; kx <= 1; kx++) {
+                    v += tmp[((y+ky)*w+(x+kx))*4+ch] * kern[(ky+1)*3+(kx+1)];
+                  }
+                }
+                d2[idx+ch] = Math.min(255, Math.max(0, v));
+              }
+            }
+          }
+          ctx.putImageData(id2, 0, 0);
+        }
+
+        // Output quality: 0.92 for max quality, 0.80 for rapido
+        const jpgQ = cfg.size >= 600 ? 0.92 : 0.80;
+        res(c.toDataURL('image/jpeg', jpgQ));
+      } catch(e) { rej(e); }
+    };
+    img.onerror = () => rej(new Error('No se pudo cargar la imagen'));
+    img.src = src;
+  });
+}
+
+// ─── Results ─────────────────────────────────────────────────────────────────
+function renderRes() {
+  const s = document.getElementById('rs');
+  if (!results.length) { s.style.display = 'none'; return; }
+  s.style.display = 'block';
+  document.getElementById('rc').textContent = results.length + (results.length !== 1 ? ' fotos' : ' foto');
+  document.getElementById('rg').innerHTML = results.map((it, i) => {
+    if (it.err) return `<div style="background:#fff5f5;border:1.5px solid #fecaca;border-radius:16px;padding:18px;text-align:center;color:#dc2626;font-size:13px;"><div style="font-size:28px;margin-bottom:5px;">❌</div><b>${it.name}</b><br><span style="color:#7f1d1d;font-size:11px;">${it.err}</span></div>`;
+    const presetName = { rapido:'⚡ Rápido', catalogo:'🏪 Catálogo', vibrante:'🎨 Vibrante', verde:'🌿 Verde' }[it.preset] || '';
+    return `<div class="rc">
+      <div class="rch">
+        <div class="rcname">${it.name}</div>
+        <div class="rcbadge">${presetName}</div>
+      </div>
+      <div class="cmpw" style="position:relative;">
+        <div class="cms"><img src="${it.src}"><div class="cml">ANTES</div></div>
+        <div class="cms after"><img src="${it.result}"><div class="cml">DESPUÉS</div></div>
+        <div class="cdiv"></div><div class="cico">↔</div>
+      </div>
+      <div class="rca">
+        <button class="bdl" onclick="dl(${i})">⬇️ Descargar</button>
+        <button class="bpos" onclick="usarPOS(${i})">📦 Usar en POS</button>
+      </div>
+      <div class="sbann" id="sb-${i}">✅ ¡Guardada! Vuelve al POS → Inventario → Editar producto.</div>
+    </div>`;
+  }).join('');
+}
+
+function dl(i) {
+  const it = results[i];
+  const a = document.createElement('a');
+  a.href = it.result; a.download = it.name + '_pro.jpg'; a.click();
+  toast('⬇️ Descargando…', true);
+}
+
+async function usarPOS(i) {
+  const it = results[i];
+  try {
+    const db = await new Promise((res, rej) => {
+      const r = indexedDB.open('DespensaEconomicaDB', 2);
+      r.onsuccess = e => res(e.target.result);
+      r.onerror   = e => rej(e.target.error);
+      r.onupgradeneeded = e => { const d = e.target.result; if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };
+    });
+    // Also compress before saving to POS (max 400px, ~100KB for Supabase)
+    const compressed = await comprimirParaPOS(it.result);
+    await new Promise((res, rej) => {
+      const r = db.transaction('kv','readwrite').objectStore('kv').put({ dataUrl: compressed, name: it.name, ts: Date.now() }, 'fotopro_pendiente');
+      r.onsuccess = () => res(); r.onerror = () => rej(r.error);
+    });
+    document.getElementById('sb-' + i).classList.add('show');
+    toast('✅ Guardada — ábrela en Inventario del POS', true);
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+function comprimirParaPOS(src) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 400;
+      const c = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) { const f = MAX / Math.max(w, h); w = Math.round(w*f); h = Math.round(h*f); }
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.82, url = c.toDataURL('image/jpeg', q);
+      while (url.length > 120*1024 && q > 0.25) { q -= 0.08; url = c.toDataURL('image/jpeg', q); }
+      res(url);
+    };
+    img.src = src;
+  });
+}
+
+function clearRes() { results = []; renderRes(); }
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+let _tt;
+function toast(m, ok = false) {
+  const e = document.getElementById('toast');
+  e.textContent = m; e.className = 'toast show' + (ok ? ' ok' : '');
+  clearTimeout(_tt); _tt = setTimeout(() => e.className = 'toast', 2800);
+}
+</script>
+</body>
+</html>
