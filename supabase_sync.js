@@ -1662,8 +1662,28 @@ async function _aplicarDatos(datos) {
 
   // Aplicar datos en memoria (fuente de verdad viene de Supabase/snapshot)
   productos=datos.productos||[]; ventasDia=datos.ventasDia||{}; ventasSem=datos.ventasSem||{};
-  ventasMes=datos.ventasMes||{}; historial=datos.historial||[]; pagos=datos.pagos||[];
+  ventasMes=datos.ventasMes||{}; pagos=datos.pagos||[];
   ventasDiarias=datos.ventasDiarias||[]; restockLog=datos.restockLog||[];
+  // BUGFIX SYNC: NO reemplazar historial directamente — hacer merge para preservar
+  // ventas locales recientes que aún no llegaron al snapshot remoto.
+  // Sin esto, _aplicarDatos borraba ventas hechas en este teléfono en los últimos
+  // segundos antes de que registrarVentaAtomica terminara de subirlas a Supabase.
+  {
+    const _nuevoH = datos.historial || [];
+    const _wipeMs2 = localStorage.getItem('vpos_historialWipeTs')
+      ? Date.parse(localStorage.getItem('vpos_historialWipeTs')) : 0;
+    const _elimSet2 = new Set((typeof cobrosEliminados !== 'undefined' ? cobrosEliminados : []).map(String));
+    const _idsSnap = new Set(_nuevoH.map(v => String(v.id)));
+    // Ventas locales que el snapshot no trae todavía → preservarlas
+    (historial || []).forEach(lv => {
+      if (_idsSnap.has(String(lv.id))) return;          // ya está en el snapshot
+      if (_elimSet2.has(String(lv.id))) return;         // fue devuelta
+      if (_wipeMs2 > 0 && (lv.ts||0) < _wipeMs2) return; // anterior al borrado masivo
+      _nuevoH.push(lv);
+    });
+    _nuevoH.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    historial = _nuevoH;
+  }
 
   // FIX BUG 3: restaurar lista de eliminados desde el snapshot
   if (typeof productosEliminados !== 'undefined') {
