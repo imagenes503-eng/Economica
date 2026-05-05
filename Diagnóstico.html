@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Diagnóstico POS — Despensa Económica</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --green:#2ea043;--green2:#3fb950;
+  --red:#f85149;--yellow:#d29922;--blue:#388bfd;--purple:#bc8cff;
+  --text:#e6edf3;--text2:#8b949e;--border:#30363d;
+}
+body{font-family:'Courier New',monospace;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+
+/* TOP BAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:99;display:flex;align-items:center;gap:10px}
+.topbar h1{font-size:14px;color:var(--green2);flex:1}
+.topbar .ver{font-size:10px;color:var(--text2)}
+#globalStatus{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;background:var(--bg3);color:var(--text2)}
+
+/* SECTIONS */
+.sec{border:1px solid var(--border);border-radius:8px;margin:10px;overflow:hidden}
+.sec-head{background:var(--bg2);padding:10px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.sec-head .ico{font-size:16px}
+.sec-head .title{font-size:12px;font-weight:700;flex:1;color:var(--text)}
+.sec-head .status{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+.s-wait{background:rgba(139,148,158,.15);color:var(--text2)}
+.s-ok{background:rgba(46,160,67,.2);color:var(--green2)}
+.s-err{background:rgba(248,81,73,.2);color:var(--red)}
+.s-warn{background:rgba(210,153,34,.2);color:var(--yellow)}
+.s-run{background:rgba(56,139,253,.15);color:var(--blue)}
+.sec-body{padding:12px 14px;display:none;border-top:1px solid var(--border)}
+.sec-body.open{display:block}
+
+/* ROWS */
+.row{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(48,54,61,.5)}
+.row:last-child{border-bottom:none}
+.row-label{color:var(--text2);width:140px;flex-shrink:0;font-size:11px;padding-top:1px}
+.row-val{flex:1;word-break:break-all;font-size:11px}
+.ok{color:var(--green2)}
+.err{color:var(--red)}
+.warn{color:var(--yellow)}
+.info{color:var(--blue)}
+.muted{color:var(--text2)}
+
+/* BUTTONS */
+.btn{display:inline-block;padding:8px 14px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit}
+.btn:active{opacity:.7}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:#da3633;color:#fff}
+.btn-blue{background:#1f6feb;color:#fff}
+.btn-gray{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-full{width:100%;margin-bottom:6px}
+
+/* LOG */
+#logBox{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;max-height:35vh;overflow-y:auto;margin-top:8px}
+.le{display:flex;gap:6px;padding:3px 0;font-size:11px;border-bottom:1px solid rgba(48,54,61,.3);animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
+.le:last-child{border-bottom:none}
+.lt{color:var(--text2);flex-shrink:0;font-size:10px}
+.lm{flex:1;word-break:break-all}
+.le.ok .lm{color:var(--green2)}
+.le.err .lm{color:var(--red)}
+.le.warn .lm{color:var(--yellow)}
+.le.info .lm{color:var(--blue)}
+.le.ev .lm{color:var(--purple)}
+
+/* TABLA VENTAS */
+.vtable{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.vtable th{background:var(--bg3);padding:6px 8px;text-align:left;color:var(--text2);font-size:10px;border-bottom:1px solid var(--border)}
+.vtable td{padding:5px 8px;border-bottom:1px solid rgba(48,54,61,.4);vertical-align:top}
+.vtable tr:last-child td{border-bottom:none}
+
+/* PROGRESS */
+.prog{height:3px;background:var(--bg3);border-radius:2px;margin-top:6px;overflow:hidden}
+.prog-bar{height:100%;background:var(--blue);border-radius:2px;transition:width .3s;width:0}
+
+/* CONFIG */
+.cfg-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.cfg-row label{font-size:11px;color:var(--text2);width:80px;flex-shrink:0}
+.cfg-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:11px;color:var(--text);font-family:monospace;outline:none}
+.cfg-row input:focus{border-color:var(--blue)}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.b-ok{background:rgba(46,160,67,.2);color:var(--green2)}
+.b-err{background:rgba(248,81,73,.2);color:var(--red)}
+.b-warn{background:rgba(210,153,34,.2);color:var(--yellow)}
+.b-info{background:rgba(56,139,253,.15);color:var(--blue)}
+
+.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🔬 Diagnóstico Completo — Despensa Económica</h1>
+  <span id="globalStatus" class="s-wait">Sin iniciar</span>
+</div>
+
+<!-- CONFIGURACIÓN -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('sCfg')">
+    <span class="ico">⚙️</span>
+    <span class="title">Configuración</span>
+    <span class="status s-wait" id="st-sCfg">Config</span>
+  </div>
+  <div class="sec-body open" id="sCfg">
+    <div class="cfg-row"><label>URL Supabase</label><input id="cfgUrl" placeholder="https://xxx.supabase.co"></div>
+    <div class="cfg-row"><label>Anon Key</label><input id="cfgKey" placeholder="eyJ..."></div>
+    <div class="cfg-row"><label>Tienda ID</label><input id="cfgTienda" placeholder="despensa1"></div>
+    <button class="btn btn-green btn-full" onclick="correrTodo()">▶ EJECUTAR DIAGNÓSTICO COMPLETO</button>
+    <button class="btn btn-gray btn-full" onclick="limpiarLog()">🗑 Limpiar log</button>
+    <div class="prog"><div class="prog-bar" id="progBar"></div></div>
+  </div>
+</div>
+
+<!-- 1. CONEXIÓN -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s1')">
+    <span class="ico">🌐</span><span class="title">1. Conexión a Supabase</span>
+    <span class="status s-wait" id="st-s1">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s1">
+    <div id="r1"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test1()">▶ Probar</button>
+  </div>
+</div>
+
+<!-- 2. TABLAS -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s2')">
+    <span class="ico">🗄️</span><span class="title">2. Acceso a tablas (RLS)</span>
+    <span class="status s-wait" id="st-s2">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s2">
+    <div id="r2"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test2()">▶ Probar</button>
+  </div>
+</div>
+
+<!-- 3. COLUMNAS VENTAS -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s3')">
+    <span class="ico">📋</span><span class="title">3. Columnas de tabla ventas</span>
+    <span class="status s-wait" id="st-s3">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s3">
+    <div id="r3"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test3()">▶ Probar</button>
+  </div>
+</div>
+
+<!-- 4. INSERT VENTA -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s4')">
+    <span class="ico">💾</span><span class="title">4. INSERT venta en Supabase</span>
+    <span class="status s-wait" id="st-s4">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s4">
+    <div id="r4"></div>
+    <button class="btn btn-red" style="margin-top:8px" onclick="test4()">⚡ Insertar venta TEST</button>
+    <p style="font-size:10px;color:var(--text2);margin-top:4px">Inserta $0.01 de prueba y luego la borra automáticamente</p>
+  </div>
+</div>
+
+<!-- 5. RPC -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s5')">
+    <span class="ico">⚡</span><span class="title">5. RPC registrar_venta_atomica</span>
+    <span class="status s-wait" id="st-s5">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s5">
+    <div id="r5"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test5()">▶ Probar RPC</button>
+  </div>
+</div>
+
+<!-- 6. REALTIME -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s6')">
+    <span class="ico">📡</span><span class="title">6. Canal Realtime (broadcast + postgres_changes)</span>
+    <span class="status s-wait" id="st-s6">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s6">
+    <div id="r6"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test6()">▶ Conectar y escuchar</button>
+    <button class="btn btn-gray" style="margin-top:6px" onclick="enviarBroadcastTest()">📤 Enviar broadcast TEST</button>
+  </div>
+</div>
+
+<!-- 7. VENTAS EN BD -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s7')">
+    <span class="ico">🧾</span><span class="title">7. Ventas almacenadas en Supabase</span>
+    <span class="status s-wait" id="st-s7">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s7">
+    <div id="r7"></div>
+    <button class="btn btn-blue" style="margin-top:8px" onclick="test7()">▶ Consultar ventas</button>
+  </div>
+</div>
+
+<!-- 8. RESUMEN -->
+<div class="sec">
+  <div class="sec-head" onclick="toggle('s8')">
+    <span class="ico">📊</span><span class="title">8. Resumen y solución recomendada</span>
+    <span class="status s-wait" id="st-s8">Pendiente</span>
+  </div>
+  <div class="sec-body" id="s8">
+    <div id="r8"><p class="muted" style="font-size:11px">Ejecuta el diagnóstico completo primero.</p></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div style="margin:10px">
+  <div style="font-size:10px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">📝 Log detallado</div>
+  <div id="logBox"></div>
+</div>
+
+<div style="height:30px"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════
+let URL='', KEY='', TIENDA='';
+let realtimeClient=null, realtimeCh=null;
+let results={};
+
+function leerConfig(){
+  URL   = document.getElementById('cfgUrl').value.trim().replace(/\/$/,'');
+  KEY   = document.getElementById('cfgKey').value.trim();
+  TIENDA= document.getElementById('cfgTienda').value.trim();
+}
+
+function cargarLocalStorage(){
+  try{
+    document.getElementById('cfgUrl').value    = localStorage.getItem('vpos_supabaseUrl') || 'https://bmusprrznlqkgzkpyfsi.supabase.co';
+    document.getElementById('cfgKey').value    = localStorage.getItem('vpos_supabaseKey') || '';
+    document.getElementById('cfgTienda').value = localStorage.getItem('vpos_tiendaId')    || '';
+  }catch(e){}
+}
+
+// ════════════════════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════════════════════
+function toggle(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+}
+function setStatus(id,txt,cls){
+  const el=document.getElementById('st-'+id);
+  el.textContent=txt; el.className='status '+cls;
+}
+function setGlobal(txt,cls){
+  const el=document.getElementById('globalStatus');
+  el.textContent=txt; el.className=cls;
+}
+function setProgress(pct){
+  document.getElementById('progBar').style.width=pct+'%';
+}
+function html(id,content){ document.getElementById(id).innerHTML=content; }
+
+function row(label,val,cls=''){
+  return `<div class="row"><span class="row-label">${label}</span><span class="row-val ${cls}">${val}</span></div>`;
+}
+function badge(txt,cls){ return `<span class="badge b-${cls}">${txt}</span>`; }
+
+// LOG
+function log(msg,tipo='info'){
+  const box=document.getElementById('logBox');
+  const t=new Date().toLocaleTimeString('es-SV');
+  const div=document.createElement('div');
+  div.className='le '+tipo;
+  div.innerHTML=`<span class="lt">${t}</span><span class="lm">${msg}</span>`;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+function limpiarLog(){ document.getElementById('logBox').innerHTML=''; }
+
+// ════════════════════════════════════════════════════════
+// HTTP HELPERS
+// ════════════════════════════════════════════════════════
+function hdrs(extra={}){
+  return {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json',...extra};
+}
+
+async function sbGet(tabla,params={}){
+  const qs=new URLSearchParams(params).toString();
+  const r=await fetch(`${URL}/rest/v1/${tabla}?${qs}`,{headers:hdrs({'Prefer':''})});
+  const txt=await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  return JSON.parse(txt);
+}
+
+async function sbPost(tabla,body,upsert=false){
+  const r=await fetch(`${URL}/rest/v1/${tabla}`,{
+    method:'POST',
+    headers:hdrs({Prefer: upsert?'resolution=merge-duplicates,return=minimal':'return=minimal'}),
+    body:JSON.stringify(body)
+  });
+  const txt=await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  return txt;
+}
+
+async function sbDelete(tabla,params={}){
+  const qs=new URLSearchParams(params).toString();
+  const r=await fetch(`${URL}/rest/v1/${tabla}?${qs}`,{
+    method:'DELETE',headers:hdrs({Prefer:'return=minimal'})
+  });
+  if(!r.ok){const t=await r.text();throw new Error(`HTTP ${r.status}: ${t}`);}
+}
+
+async function sbRpc(fn,params){
+  const r=await fetch(`${URL}/rest/v1/rpc/${fn}`,{
+    method:'POST',headers:hdrs(),body:JSON.stringify(params)
+  });
+  const txt=await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+  return JSON.parse(txt);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 1 — Conexión básica
+// ════════════════════════════════════════════════════════
+async function test1(){
+  leerConfig();
+  setStatus('s1','Probando...','s-run');
+  document.getElementById('s1').classList.add('open');
+  log('TEST 1: Probando conexión a Supabase...','info');
+  let out='';
+  try{
+    // Test REST health
+    const t0=Date.now();
+    const r=await fetch(`${URL}/rest/v1/`,{headers:hdrs({'Prefer':''})});
+    const ms=Date.now()-t0;
+    const ok=r.status<500;
+    out+=row('URL',URL,'info');
+    out+=row('REST API',ok?`✅ Responde (${ms}ms)`:`❌ Error ${r.status}`,ok?'ok':'err');
+    out+=row('Latencia',ms+'ms', ms<500?'ok':ms<1500?'warn':'err');
+    // Test auth
+    const r2=await fetch(`${URL}/auth/v1/settings`,{headers:{'apikey':KEY}});
+    out+=row('Auth',r2.ok?'✅ OK':'❌ Error: '+r2.status,r2.ok?'ok':'err');
+    results.conexion=ok&&r2.ok;
+    setStatus('s1',ok&&r2.ok?'✅ OK':'❌ Error',ok&&r2.ok?'s-ok':'s-err');
+    log('TEST 1 '+(ok?'OK':'FALLO')+' — REST: '+r.status+' Auth: '+r2.status, ok?'ok':'err');
+  }catch(e){
+    out+=row('Error',e.message,'err');
+    setStatus('s1','❌ Sin conexión','s-err');
+    results.conexion=false;
+    log('TEST 1 ERROR: '+e.message,'err');
+  }
+  html('r1',out);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 2 — Acceso a tablas (RLS)
+// ════════════════════════════════════════════════════════
+async function test2(){
+  leerConfig();
+  setStatus('s2','Probando...','s-run');
+  document.getElementById('s2').classList.add('open');
+  log('TEST 2: Verificando acceso a tablas...','info');
+  const tablas=['tiendas','ventas','productos','sync_snapshots','ventas_diarias','pagos'];
+  let out=''; let errores=0;
+  for(const t of tablas){
+    try{
+      const params={select:'count',limit:1};
+      if(t!=='tiendas') params.tienda_id='eq.'+TIENDA;
+      const d=await sbGet(t,params);
+      const n=Array.isArray(d)?d.length:0;
+      out+=row(t,`✅ Accesible (${n} filas visible)`,'ok');
+      log(`Tabla ${t}: OK, ${n} filas`,'ok');
+    }catch(e){
+      errores++;
+      const esRls=e.message.includes('42501')||e.message.includes('permission')||e.message.includes('RLS')||e.message.includes('policy');
+      const msg=esRls?`❌ BLOQUEADO POR RLS`:(`❌ Error: `+e.message.slice(0,80));
+      out+=row(t,msg,'err');
+      log(`Tabla ${t} ERROR: ${e.message}`,'err');
+    }
+  }
+  results.rls=errores===0;
+  setStatus('s2',errores===0?'✅ Todas OK':`❌ ${errores} tabla(s) bloqueada(s)`,errores===0?'s-ok':'s-err');
+  html('r2',out);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 3 — Columnas tabla ventas
+// ════════════════════════════════════════════════════════
+async function test3(){
+  leerConfig();
+  setStatus('s3','Probando...','s-run');
+  document.getElementById('s3').classList.add('open');
+  log('TEST 3: Verificando columnas de tabla ventas...','info');
+  let out='';
+  // Try selecting specific columns to detect what exists
+  const cols=['id','fecha_iso','total','pago','vuelto','items','items_json','tienda_id','created_at'];
+  let existentes=[],faltantes=[];
+  for(const c of cols){
+    try{
+      await sbGet('ventas',{select:c,tienda_id:'eq.'+TIENDA,limit:1});
+      existentes.push(c);
+      out+=row(c,'✅ Existe','ok');
+      log(`Columna ventas.${c}: ✅`,'ok');
+    }catch(e){
+      const noExiste=e.message.includes('does not exist')||e.message.includes('column')||e.message.includes('42703');
+      faltantes.push(c);
+      out+=row(c,noExiste?'❌ NO EXISTE':'❌ Error: '+e.message.slice(0,60),'err');
+      log(`Columna ventas.${c}: ❌ — ${e.message.slice(0,80)}`,'err');
+    }
+  }
+  results.columnas={existentes,faltantes};
+  const ok=faltantes.length===0||!faltantes.includes('id');
+  setStatus('s3',faltantes.length?`⚠️ Faltan: ${faltantes.join(', ')}`:'✅ Completas',faltantes.length?'s-warn':'s-ok');
+  if(faltantes.includes('items_json')){
+    out+=`<div style="margin-top:10px;padding:8px;background:rgba(210,153,34,.1);border:1px solid var(--yellow);border-radius:6px;font-size:11px;color:var(--yellow)">
+    ⚠️ Columna <b>items_json</b> falta. Ejecuta en Supabase SQL Editor:<br>
+    <code style="display:block;margin-top:4px;padding:6px;background:var(--bg);border-radius:4px;color:var(--green2)">ALTER TABLE ventas ADD COLUMN IF NOT EXISTS items_json jsonb;</code>
+    </div>`;
+  }
+  html('r3',out);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 4 — INSERT venta
+// ════════════════════════════════════════════════════════
+async function test4(){
+  leerConfig();
+  setStatus('s4','Insertando...','s-run');
+  document.getElementById('s4').classList.add('open');
+  log('TEST 4: Probando INSERT en tabla ventas...','info');
+  let out='';
+  const testId='DIAG_'+Date.now();
+
+  // Test A: sin items_json
+  try{
+    await sbPost('ventas',{
+      id:testId+'_a', tienda_id:TIENDA,
+      fecha_iso:new Date().toISOString(),
+      total:0.01, pago:0.01, vuelto:0,
+      items:'TEST DIAGNOSTICO'
+    },true);
+    out+=row('INSERT básico','✅ OK — venta insertada sin items_json','ok');
+    log('INSERT sin items_json: ✅','ok');
+    results.insertBasico=true;
+  }catch(e){
+    out+=row('INSERT básico','❌ FALLÓ: '+e.message,'err');
+    log('INSERT sin items_json FALLÓ: '+e.message,'err');
+    results.insertBasico=false;
+  }
+
+  // Test B: con items_json
+  try{
+    await sbPost('ventas',{
+      id:testId+'_b', tienda_id:TIENDA,
+      fecha_iso:new Date().toISOString(),
+      total:0.01, pago:0.01, vuelto:0,
+      items:'TEST DIAGNOSTICO',
+      items_json:[{nom:'TEST',cant:1,precio:0.01}]
+    },true);
+    out+=row('INSERT con items_json','✅ OK — columna items_json existe y funciona','ok');
+    log('INSERT con items_json: ✅','ok');
+    results.insertJson=true;
+  }catch(e){
+    out+=row('INSERT con items_json','❌ FALLÓ: '+e.message.slice(0,100),'err');
+    log('INSERT con items_json FALLÓ: '+e.message,'err');
+    results.insertJson=false;
+    if(e.message.includes('items_json')||e.message.includes('column')){
+      out+=`<div style="margin-top:6px;padding:6px;background:rgba(248,81,73,.1);border-left:3px solid var(--red);font-size:11px;color:var(--red)">
+      Solución: <code>ALTER TABLE ventas ADD COLUMN IF NOT EXISTS items_json jsonb;</code></div>`;
+    }
+  }
+
+  // Limpiar ventas de prueba
+  try{
+    await sbDelete('ventas',{'id':'in.('+testId+'_a,'+testId+'_b)'});
+    out+=row('Limpieza','✅ Ventas de prueba eliminadas','muted');
+    log('Ventas TEST eliminadas','ok');
+  }catch(e){
+    log('No se pudieron eliminar ventas test: '+e.message,'warn');
+  }
+
+  results.insert=results.insertBasico;
+  setStatus('s4',results.insertBasico?'✅ INSERT OK':'❌ INSERT FALLA',results.insertBasico?'s-ok':'s-err');
+  html('r4',out);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 5 — RPC
+// ════════════════════════════════════════════════════════
+async function test5(){
+  leerConfig();
+  setStatus('s5','Probando...','s-run');
+  document.getElementById('s5').classList.add('open');
+  log('TEST 5: Probando RPC registrar_venta_atomica...','info');
+  let out='';
+  try{
+    const res=await sbRpc('registrar_venta_atomica',{
+      p_venta_id:'DIAG_RPC_'+Date.now(),
+      p_tienda_id:TIENDA,
+      p_fecha_iso:new Date().toISOString(),
+      p_total:0.01, p_pago:0.01, p_vuelto:0,
+      p_items_txt:'TEST RPC',
+      p_items_json:[]
+    });
+    out+=row('RPC existe','✅ Responde correctamente','ok');
+    out+=row('Resultado',JSON.stringify(res).slice(0,200),'info');
+    results.rpc=true;
+    setStatus('s5','✅ RPC OK','s-ok');
+    log('RPC OK: '+JSON.stringify(res).slice(0,100),'ok');
+  }catch(e){
+    const noExiste=e.message.includes('404')||e.message.includes('Could not find')||e.message.includes('function');
+    out+=row('RPC',noExiste?'❌ NO EXISTE en Supabase':'❌ Error: '+e.message.slice(0,100),'err');
+    if(noExiste){
+      out+=`<div style="margin-top:8px;padding:8px;background:rgba(248,81,73,.1);border:1px solid var(--red);border-radius:6px;font-size:11px;color:var(--yellow)">
+      ⚠️ El RPC <b>registrar_venta_atomica</b> no existe en tu Supabase.<br>
+      <b>Impacto:</b> Las ventas deben insertarse via INSERT directo.<br>
+      El parche del JS ya tiene fallback a INSERT directo.
+      </div>`;
+    }
+    results.rpc=false;
+    setStatus('s5',noExiste?'⚠️ No existe':'❌ Error',noExiste?'s-warn':'s-err');
+    log('RPC FALLÓ: '+e.message,'err');
+  }
+  html('r5',out);
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 6 — Realtime
+// ════════════════════════════════════════════════════════
+let rtEventos=0;
+
+async function test6(){
+  leerConfig();
+  setStatus('s6','Conectando...','s-run');
+  document.getElementById('s6').classList.add('open');
+  log('TEST 6: Iniciando canal Realtime...','info');
+
+  if(!window.supabase){
+    log('Cargando SDK Supabase...','info');
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+    log('SDK cargado','ok');
+  }
+
+  if(realtimeCh){ try{await realtimeCh.unsubscribe();}catch(e){} realtimeCh=null; }
+  realtimeClient=window.supabase.createClient(URL,KEY);
+  rtEventos=0;
+
+  let out=`<div id="rtStatus" class="row"><span class="row-label">Estado canal</span><span class="row-val pulse" id="rtSt">Conectando...</span></div>
+  <div id="rtEventos" class="row"><span class="row-label">Eventos recibidos</span><span class="row-val" id="rtEv">0</span></div>
+  <div id="rtLog" style="margin-top:6px;font-size:11px;color:var(--text2)">Esperando eventos...</div>`;
+  html('r6',out);
+
+  realtimeCh=realtimeClient
+    .channel('diag_'+TIENDA,{config:{broadcast:{self:true,ack:false}}})
+    .on('broadcast',{event:'diag_test'},({payload})=>{
+      rtEventos++;
+      document.getElementById('rtEv').textContent=rtEventos;
+      document.getElementById('rtLog').innerHTML=`<span class="ok">✅ Broadcast recibido: ${JSON.stringify(payload).slice(0,80)}</span>`;
+      log('BROADCAST diag_test recibido: '+JSON.stringify(payload).slice(0,80),'ev');
+      results.broadcast=true;
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'ventas',filter:'tienda_id=eq.'+TIENDA},(payload)=>{
+      rtEventos++;
+      document.getElementById('rtEv').textContent=rtEventos;
+      document.getElementById('rtLog').innerHTML=`<span class="ok">✅ postgres_changes INSERT ventas: ID=${payload.new?.id} $${payload.new?.total}</span>`;
+      log('POSTGRES_CHANGES ventas INSERT: '+JSON.stringify(payload.new).slice(0,80),'ev');
+      results.pgChanges=true;
+    })
+    .subscribe((status)=>{
+      document.getElementById('rtSt').textContent=status;
+      document.getElementById('rtSt').classList.remove('pulse');
+      if(status==='SUBSCRIBED'){
+        document.getElementById('rtSt').className='ok';
+        results.realtime=true;
+        setStatus('s6','✅ Conectado','s-ok');
+        log('Realtime SUBSCRIBED ✅','ok');
+      } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+        document.getElementById('rtSt').className='err';
+        results.realtime=false;
+        setStatus('s6','❌ '+status,'s-err');
+        log('Realtime ERROR: '+status,'err');
+      } else {
+        log('Realtime status: '+status,'info');
+      }
+    });
+}
+
+async function enviarBroadcastTest(){
+  if(!realtimeCh){ log('Primero conecta el canal Realtime','warn'); return; }
+  log('Enviando broadcast diag_test...','info');
+  await realtimeCh.send({type:'broadcast',event:'diag_test',payload:{ts:Date.now(),msg:'prueba'}});
+  log('Broadcast enviado — deberías verlo en ambos teléfonos','ok');
+}
+
+// ════════════════════════════════════════════════════════
+// TEST 7 — Ventas en BD
+// ════════════════════════════════════════════════════════
+async function test7(){
+  leerConfig();
+  setStatus('s7','Consultando...','s-run');
+  document.getElementById('s7').classList.add('open');
+  log('TEST 7: Consultando ventas en Supabase...','info');
+  try{
+    const ventas=await sbGet('ventas',{
+      select:'id,fecha_iso,total,tienda_id',
+      tienda_id:'eq.'+TIENDA,
+      order:'fecha_iso.desc',
+      limit:20
+    });
+    results.ventasBD=ventas.length;
+    setStatus('s7',`${ventas.length} ventas`,'s-ok');
+    log(`Ventas en Supabase: ${ventas.length}`,'ok');
+
+    let out=`<div class="row"><span class="row-label">Total ventas</span><span class="row-val ${ventas.length?'ok':'warn'}">${ventas.length} registros para tienda "${TIENDA}"</span></div>`;
+
+    if(ventas.length===0){
+      out+=`<div style="margin-top:8px;padding:8px;background:rgba(210,153,34,.1);border:1px solid var(--yellow);border-radius:6px;font-size:11px;color:var(--yellow)">
+      ⚠️ <b>0 ventas en Supabase</b> — Las ventas no están llegando a la base de datos.<br>
+      Esto confirma que el INSERT está fallando. Revisa el resultado del TEST 4.</div>`;
+    } else {
+      out+=`<table class="vtable"><tr><th>ID</th><th>Fecha</th><th>Total</th></tr>`;
+      ventas.forEach(v=>{
+        const f=v.fecha_iso?new Date(v.fecha_iso).toLocaleString('es-SV'):'—';
+        out+=`<tr><td class="muted">${String(v.id).slice(0,20)}...</td><td>${f}</td><td class="ok">$${Number(v.total).toFixed(2)}</td></tr>`;
+      });
+      out+=`</table>`;
+    }
+    html('r7',out);
+  }catch(e){
+    setStatus('s7','❌ Error','s-err');
+    html('r7',`<div class="err">❌ Error: ${e.message}</div>`);
+    log('TEST 7 ERROR: '+e.message,'err');
+    results.ventasBD=-1;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// RESUMEN FINAL
+// ════════════════════════════════════════════════════════
+function generarResumen(){
+  document.getElementById('s8').classList.add('open');
+  setStatus('s8','Analizando...','s-run');
+  let out='<div style="font-size:12px">';
+  let problemas=[];
+  let soluciones=[];
+
+  out+=`<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--text)">📋 Resultado de cada prueba:</div>`;
+
+  const check=(label,val,okMsg,errMsg)=>{
+    if(val===undefined) return row(label,badge('No probado','info'),'');
+    return row(label, val?badge('✅ '+okMsg,'ok'):badge('❌ '+errMsg,'err'), '');
+  };
+
+  out+=check('Conexión',results.conexion,'Conectado','Sin conexión');
+  out+=check('Tablas (RLS)',results.rls,'Accesibles','Bloqueadas');
+  out+=check('INSERT básico',results.insertBasico,'Funciona','FALLA ← PROBLEMA PRINCIPAL');
+  out+=check('INSERT items_json',results.insertJson,'Columna existe','Columna falta');
+  out+=check('RPC atómica',results.rpc,'Existe','No existe');
+  out+=check('Realtime canal',results.realtime,'Conectado','Error');
+  out+=check('Ventas en BD',(results.ventasBD>0),'Hay registros','0 ventas ← CONFIRMADO');
+
+  // Diagnóstico
+  out+=`<div style="margin-top:14px;font-weight:700;font-size:13px;color:var(--text)">🔍 Diagnóstico:</div>`;
+
+  if(results.ventasBD===0){
+    problemas.push('Las ventas NO llegan a Supabase (0 registros en tabla ventas)');
+  }
+  if(results.insertBasico===false){
+    problemas.push('INSERT a tabla ventas falla — posiblemente RLS bloqueando escritura');
+    soluciones.push(`En Supabase → Authentication → Policies → tabla ventas → agregar política INSERT para anon`);
+  }
+  if(results.insertJson===false&&results.insertBasico===true){
+    problemas.push('Columna items_json no existe en tabla ventas');
+    soluciones.push(`SQL: ALTER TABLE ventas ADD COLUMN IF NOT EXISTS items_json jsonb;`);
+  }
+  if(results.rpc===false){
+    problemas.push('RPC registrar_venta_atomica no existe en Supabase');
+    soluciones.push('El JS ya tiene fallback a INSERT directo — este no es el problema principal');
+  }
+  if(results.realtime===false){
+    problemas.push('Canal Realtime tiene CHANNEL_ERROR — posible límite de conexiones o WebSocket bloqueado');
+  }
+  if(!results.conexion){
+    problemas.push('Sin conexión a Supabase — verificar URL y API key');
+  }
+
+  if(problemas.length===0){
+    out+=`<div style="padding:8px;background:rgba(46,160,67,.1);border:1px solid var(--green);border-radius:6px;color:var(--green2);font-size:11px;margin-top:8px">
+    ✅ Todo funciona correctamente. El problema puede ser en el código del POS, no en Supabase.</div>`;
+  } else {
+    out+=`<div style="margin-top:8px">`;
+    problemas.forEach((p,i)=>{
+      out+=`<div style="padding:6px 8px;background:rgba(248,81,73,.08);border-left:3px solid var(--red);margin-bottom:5px;font-size:11px;color:var(--red)">❌ ${p}</div>`;
+    });
+    out+=`</div>`;
+  }
+
+  if(soluciones.length){
+    out+=`<div style="margin-top:10px;font-weight:700;font-size:12px;color:var(--yellow)">🛠️ Soluciones:</div>`;
+    soluciones.forEach((s,i)=>{
+      out+=`<div style="padding:6px 8px;background:rgba(210,153,34,.08);border-left:3px solid var(--yellow);margin-top:5px;font-size:11px;color:var(--yellow)">
+      ${i+1}. ${s.includes('ALTER')||s.includes('SQL:')?`<code style="background:var(--bg);padding:3px 6px;border-radius:3px;color:var(--green2);display:block;margin-top:3px">${s}</code>`:s}
+      </div>`;
+    });
+  }
+
+  out+='</div>';
+  html('r8',out);
+  setStatus('s8',problemas.length?`❌ ${problemas.length} problema(s)`:'✅ Sin problemas',problemas.length?'s-err':'s-ok');
+}
+
+// ════════════════════════════════════════════════════════
+// EJECUTAR TODO
+// ════════════════════════════════════════════════════════
+async function correrTodo(){
+  leerConfig();
+  if(!URL||!KEY||!TIENDA){ log('❌ Completa la configuración primero','err'); return; }
+  limpiarLog();
+  results={};
+  setGlobal('Ejecutando...','s-run pulse');
+  log('════ INICIANDO DIAGNÓSTICO COMPLETO ════','info');
+
+  setProgress(5);  await test1(); setProgress(20);
+  setProgress(22); await test2(); setProgress(38);
+  setProgress(40); await test3(); setProgress(54);
+  setProgress(56); await test4(); setProgress(70);
+  setProgress(72); await test5(); setProgress(82);
+  setProgress(84); await test6(); setProgress(90);
+
+  // Wait for Realtime to connect
+  await new Promise(r=>setTimeout(r,3000));
+  setProgress(92); await test7(); setProgress(98);
+
+  generarResumen();
+  setProgress(100);
+
+  const errores=Object.values(results).filter(v=>v===false).length;
+  setGlobal(errores?`❌ ${errores} problema(s) encontrado(s)`:'✅ Diagnóstico completo',errores?'s-err':'s-ok');
+  log('════ DIAGNÓSTICO COMPLETO ════','info');
+}
+
+// Init
+cargarLocalStorage();
+</script>
+</body>
+</html>
