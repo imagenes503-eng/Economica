@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🔍 Debug Sync — Despensa Económica</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Courier New', monospace; background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border-bottom: 2px solid #22c55e;
+    padding: 14px 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-size: 15px; color: #22c55e; letter-spacing: 1px; }
+  .header p  { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .status-bar {
+    display: flex; gap: 8px; padding: 10px 14px;
+    background: #0f172a; border-bottom: 1px solid #1e293b;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    border: 1px solid transparent;
+  }
+  .badge.ok    { background: rgba(34,197,94,.15);  border-color: #22c55e; color: #22c55e; }
+  .badge.warn  { background: rgba(234,179,8,.15);  border-color: #eab308; color: #eab308; }
+  .badge.err   { background: rgba(239,68,68,.15);  border-color: #ef4444; color: #ef4444; }
+  .badge.info  { background: rgba(99,102,241,.15); border-color: #6366f1; color: #818cf8; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  .section { padding: 12px 14px; border-bottom: 1px solid #1e293b; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; margin-bottom: 8px; }
+
+  .config-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .config-row label { font-size: 11px; color: #94a3b8; width: 90px; flex-shrink: 0; }
+  .config-row input {
+    flex: 1; background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+    padding: 7px 10px; font-size: 11px; color: #e2e8f0; font-family: monospace;
+    outline: none;
+  }
+  .config-row input:focus { border-color: #22c55e; }
+
+  .btn {
+    width: 100%; padding: 11px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+    margin-bottom: 6px; transition: opacity .15s;
+  }
+  .btn:active { opacity: .75; }
+  .btn-green  { background: #22c55e; color: #052e16; }
+  .btn-blue   { background: #3b82f6; color: #fff; }
+  .btn-red    { background: #ef4444; color: #fff; }
+  .btn-gray   { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+  #log {
+    height: 38vh; overflow-y: auto;
+    padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 3px;
+    scroll-behavior: smooth;
+  }
+  .log-entry {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 5px 8px; border-radius: 5px; font-size: 11px; line-height: 1.5;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .log-entry.success { background: rgba(34,197,94,.08);  border-left: 3px solid #22c55e; }
+  .log-entry.error   { background: rgba(239,68,68,.08);  border-left: 3px solid #ef4444; }
+  .log-entry.warn    { background: rgba(234,179,8,.08);  border-left: 3px solid #eab308; }
+  .log-entry.info    { background: rgba(99,102,241,.08); border-left: 3px solid #6366f1; }
+  .log-entry.event   { background: rgba(168,85,247,.08); border-left: 3px solid #a855f7; }
+  .log-time  { color: #475569; flex-shrink: 0; font-size: 10px; padding-top: 1px; }
+  .log-text  { flex: 1; word-break: break-all; }
+
+  .ventas-list { display: flex; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto; }
+  .venta-row {
+    background: #1e293b; border-radius: 6px; padding: 8px 10px;
+    font-size: 11px; display: flex; justify-content: space-between; align-items: center;
+    border-left: 3px solid #6366f1;
+  }
+  .venta-row .vid  { color: #64748b; font-size: 10px; word-break: break-all; max-width: 55%; }
+  .venta-row .vtot { color: #22c55e; font-weight: 700; font-size: 13px; }
+  .venta-row .vfec { color: #94a3b8; font-size: 10px; }
+
+  .counter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .counter-box {
+    background: #1e293b; border-radius: 8px; padding: 12px 10px; text-align: center;
+  }
+  .counter-box .num { font-size: 28px; font-weight: 900; color: #22c55e; line-height: 1; }
+  .counter-box .lbl { font-size: 10px; color: #64748b; margin-top: 4px; }
+
+  .pulse { animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔍 DEBUG SYNC — Despensa Económica</h1>
+  <p>Diagnóstico de sincronización en tiempo real</p>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <span class="badge info"><span class="dot"></span> Sin configurar</span>
+</div>
+
+<!-- Configuración -->
+<div class="section">
+  <div class="section-title">⚙️ Configuración (se lee del localStorage automáticamente)</div>
+  <div class="config-row">
+    <label>Supabase URL</label>
+    <input id="cfgUrl" type="url" placeholder="https://xxx.supabase.co">
+  </div>
+  <div class="config-row">
+    <label>Anon Key</label>
+    <input id="cfgKey" type="text" placeholder="eyJ...">
+  </div>
+  <div class="config-row">
+    <label>Tienda ID</label>
+    <input id="cfgTienda" type="text" placeholder="despensa1">
+  </div>
+  <button class="btn btn-green" onclick="iniciar()">▶ INICIAR DIAGNÓSTICO</button>
+  <button class="btn btn-gray" onclick="limpiarLog()">🗑 Limpiar log</button>
+</div>
+
+<!-- Contadores -->
+<div class="section">
+  <div class="section-title">📊 Estado</div>
+  <div class="counter-grid">
+    <div class="counter-box">
+      <div class="num" id="cntVentasSupa">—</div>
+      <div class="lbl">Ventas en Supabase</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" id="cntRealtime">—</div>
+      <div class="lbl">Eventos Realtime recibidos</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" id="cntCanal">—</div>
+      <div class="lbl">Estado del canal</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" id="cntPoll">0</div>
+      <div class="lbl">Polls ejecutados</div>
+    </div>
+  </div>
+</div>
+
+<!-- Acciones -->
+<div class="section">
+  <div class="section-title">🔧 Acciones de prueba</div>
+  <button class="btn btn-blue"  onclick="consultarVentas()">📋 Consultar ventas en Supabase</button>
+  <button class="btn btn-blue"  onclick="probarRealtime()">📡 Probar canal Realtime</button>
+  <button class="btn btn-red"   onclick="insertarVentaPrueba()">⚡ Insertar venta de PRUEBA en Supabase</button>
+</div>
+
+<!-- Log -->
+<div class="section" style="padding-bottom:0;">
+  <div class="section-title">📝 Log en tiempo real</div>
+</div>
+<div id="log"></div>
+
+<!-- Últimas ventas -->
+<div class="section">
+  <div class="section-title">🧾 Últimas ventas en Supabase</div>
+  <div class="ventas-list" id="ventasList">
+    <div style="color:#475569;font-size:12px;text-align:center;padding:20px;">Presiona "Consultar ventas"</div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────
+let SB_URL = '', SB_KEY = '', TIENDA_ID = '';
+let canal = null, pollTimer = null, pollCount = 0, realtimeCount = 0;
+
+// Leer localStorage del dominio actual (si abre desde el mismo origen que el POS)
+function cargarConfig() {
+  try {
+    SB_URL     = localStorage.getItem('vpos_supabaseUrl') || 'https://bmusprrznlqkgzkpyfsi.supabase.co';
+    SB_KEY     = localStorage.getItem('vpos_supabaseKey') || '';
+    TIENDA_ID  = localStorage.getItem('vpos_tiendaId')    || '';
+  } catch(e) {}
+  document.getElementById('cfgUrl').value    = SB_URL;
+  document.getElementById('cfgKey').value    = SB_KEY;
+  document.getElementById('cfgTienda').value = TIENDA_ID;
+}
+
+function leerConfig() {
+  SB_URL    = document.getElementById('cfgUrl').value.trim().replace(/\/$/, '');
+  SB_KEY    = document.getElementById('cfgKey').value.trim();
+  TIENDA_ID = document.getElementById('cfgTienda').value.trim();
+}
+
+// ── Log ───────────────────────────────────────────────────────────────
+function log(msg, tipo = 'info') {
+  const el = document.getElementById('log');
+  const t  = new Date().toLocaleTimeString('es-SV');
+  const div = document.createElement('div');
+  div.className = 'log-entry ' + tipo;
+  div.innerHTML = `<span class="log-time">${t}</span><span class="log-text">${msg}</span>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+function limpiarLog() { document.getElementById('log').innerHTML = ''; }
+
+// ── Status bar ────────────────────────────────────────────────────────
+function setStatus(items) {
+  document.getElementById('statusBar').innerHTML = items.map(([label, tipo]) =>
+    `<span class="badge ${tipo}"><span class="dot"></span>${label}</span>`
+  ).join('');
+}
+
+// ── Fetch helpers ─────────────────────────────────────────────────────
+function headers(extra = {}) {
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+           'Content-Type': 'application/json', ...extra };
+}
+
+async function sbGet(tabla, params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const r  = await fetch(`${SB_URL}/rest/v1/${tabla}?${qs}`, { headers: headers({'Prefer':''}) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function sbPost(tabla, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabla}`, {
+    method: 'POST', headers: headers({'Prefer':'return=minimal'}),
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+  return r;
+}
+
+// ── Consultar ventas ──────────────────────────────────────────────────
+async function consultarVentas() {
+  leerConfig();
+  log('Consultando ventas en Supabase...', 'info');
+  try {
+    const ventas = await sbGet('ventas', {
+      select: 'id,fecha_iso,total,tienda_id',
+      tienda_id: 'eq.' + TIENDA_ID,
+      order: 'fecha_iso.desc',
+      limit: 20
+    });
+    document.getElementById('cntVentasSupa').textContent = ventas.length;
+    log(`✅ ${ventas.length} ventas encontradas en Supabase para tienda "${TIENDA_ID}"`, 'success');
+
+    const list = document.getElementById('ventasList');
+    if (!ventas.length) {
+      list.innerHTML = '<div style="color:#475569;font-size:12px;text-align:center;padding:12px;">Sin ventas registradas</div>';
+      return;
+    }
+    list.innerHTML = ventas.map(v => {
+      const fecha = v.fecha_iso ? new Date(v.fecha_iso).toLocaleString('es-SV') : '—';
+      const idCorto = String(v.id).slice(0, 16) + '...';
+      return `<div class="venta-row">
+        <div>
+          <div class="vid">${idCorto}</div>
+          <div class="vfec">${fecha}</div>
+        </div>
+        <div class="vtot">$${Number(v.total).toFixed(2)}</div>
+      </div>`;
+    }).join('');
+    setStatus([['Supabase ✓', 'ok'], [TIENDA_ID, 'info']]);
+  } catch(e) {
+    log('❌ Error al consultar: ' + e.message, 'error');
+    setStatus([['Error Supabase', 'err']]);
+  }
+}
+
+// ── Probar Realtime ───────────────────────────────────────────────────
+async function probarRealtime() {
+  leerConfig();
+  if (canal) {
+    log('⚠️ Canal ya abierto. Cerrando primero...', 'warn');
+    await canal.unsubscribe();
+    canal = null;
+  }
+
+  log('🔌 Conectando a Supabase Realtime...', 'info');
+  document.getElementById('cntCanal').textContent = '...';
+  document.getElementById('cntCanal').classList.add('pulse');
+
+  // Usar el SDK de Supabase via CDN
+  if (!window.supabase) {
+    log('Cargando SDK de Supabase...', 'info');
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    log('SDK cargado ✅', 'success');
+  }
+
+  const client = window.supabase.createClient(SB_URL, SB_KEY);
+  const channelName = 'debug_pos_' + TIENDA_ID;
+  realtimeCount = 0;
+  document.getElementById('cntRealtime').textContent = '0';
+
+  canal = client
+    .channel(channelName)
+    // Escuchar broadcast 'venta'
+    .on('broadcast', { event: 'venta' }, ({ payload }) => {
+      realtimeCount++;
+      document.getElementById('cntRealtime').textContent = realtimeCount;
+      log(`📡 BROADCAST venta recibido! ID:${payload?.id} Total:$${payload?.total}`, 'event');
+    })
+    // Escuchar postgres_changes en tabla ventas
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'ventas',
+      filter: 'tienda_id=eq.' + TIENDA_ID
+    }, (payload) => {
+      realtimeCount++;
+      document.getElementById('cntRealtime').textContent = realtimeCount;
+      const r = payload.new || {};
+      log(`🗄️ POSTGRES_CHANGES INSERT ventas! ID:${r.id} Total:$${r.total}`, 'event');
+    })
+    .subscribe((status) => {
+      document.getElementById('cntCanal').classList.remove('pulse');
+      document.getElementById('cntCanal').textContent = status;
+      if (status === 'SUBSCRIBED') {
+        log('✅ Canal Realtime CONECTADO — esperando eventos...', 'success');
+        setStatus([['Realtime ACTIVO', 'ok'], [TIENDA_ID, 'info'], ['Esperando ventas...', 'warn']]);
+        // Iniciar polling de ventas cada 5s para esta sesión de debug
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(async () => {
+          pollCount++;
+          document.getElementById('cntPoll').textContent = pollCount;
+          try {
+            const v = await sbGet('ventas', {
+              select: 'id,total,fecha_iso',
+              tienda_id: 'eq.' + TIENDA_ID,
+              order: 'fecha_iso.desc',
+              limit: 5
+            });
+            document.getElementById('cntVentasSupa').textContent = v.length > 0 ? v.length + '+' : '0';
+            log(`🔄 Poll #${pollCount}: ${v.length} ventas en Supabase`, 'info');
+          } catch(e) { log('Poll error: ' + e.message, 'warn'); }
+        }, 5000);
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        log('❌ Error en canal Realtime: ' + status, 'error');
+        setStatus([['Realtime ERROR', 'err']]);
+      } else {
+        log('Canal status: ' + status, 'info');
+      }
+    });
+}
+
+// ── Insertar venta de prueba ──────────────────────────────────────────
+async function insertarVentaPrueba() {
+  leerConfig();
+  if (!confirm('Esto insertará una venta de PRUEBA ($0.01) en Supabase. ¿Continuar?')) return;
+  const id = 'TEST_' + Date.now();
+  log(`⚡ Insertando venta de prueba ID: ${id}`, 'warn');
+  try {
+    await sbPost('ventas', {
+      id, tienda_id: TIENDA_ID,
+      fecha_iso: new Date().toISOString(),
+      total: 0.01, pago: 0.01, vuelto: 0,
+      items: '1x PRUEBA_SYNC', items_json: JSON.stringify([])
+    });
+    log('✅ Venta de prueba insertada. Revisa si el POS la recibe automáticamente...', 'success');
+    log('👉 Si ves este log PERO el POS no actualiza → problema en _aplicarVentaRealtime o actualizarTodo()', 'warn');
+    log('👉 Si NO ves evento postgres_changes arriba → la tabla ventas no está en Realtime', 'warn');
+    setTimeout(consultarVentas, 1500);
+  } catch(e) {
+    log('❌ Error al insertar: ' + e.message, 'error');
+  }
+}
+
+// ── Inicio ────────────────────────────────────────────────────────────
+function iniciar() {
+  leerConfig();
+  if (!SB_URL || !SB_KEY || !TIENDA_ID) {
+    log('❌ Faltan datos de configuración', 'error');
+    return;
+  }
+  log(`🚀 Iniciando diagnóstico para tienda: "${TIENDA_ID}"`, 'success');
+  log(`URL: ${SB_URL}`, 'info');
+  consultarVentas();
+  setTimeout(probarRealtime, 800);
+}
+
+// Auto-cargar config al inicio
+cargarConfig();
+log('Página de diagnóstico lista. Presiona ▶ INICIAR DIAGNÓSTICO', 'info');
+log('💡 Si abres esta página desde el mismo dominio del POS, leerá el localStorage automáticamente', 'info');
+</script>
+</body>
+</html>
