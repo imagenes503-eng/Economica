@@ -636,7 +636,7 @@ async function _cargarDatosAlIniciar() {
   let tieneDatosPrevios = false;
   try {
     const fusionId = _getTiendaId() + '_fusionado';
-    const snaps = await _sbGet('sync_snapshots', { select: 'datos', id: 'eq.' + fusionId });
+    const snaps = await _sbGet(, { select: 'datos', id: 'eq.' + fusionId });
     if (snaps && snaps.length > 0) {
       await _aplicarDatos(JSON.parse(snaps[0].datos));
       tieneDatosPrevios = true;
@@ -1175,13 +1175,13 @@ function _aplicarRestriccionesPorRol() {
 
   if (esCajero) {
     // Cajero: solo puede ver Venta y Ventas por Día — ocultar todo lo demás
-    ['pgReportes','pgInventario','pgSync','pgFinanzasMes','pgCierreDia'].forEach(id => {
+    ['pgReportes','pgInventario','pgFinanzasMes','pgCierreDia'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
     document.querySelectorAll('.nav-tab, .drawer-nav-item').forEach(tab => {
       const onclick = tab.getAttribute('onclick') || '';
-      if (['pgReportes','pgInventario','pgSync','pgFinanzasMes','pgCierreDia'].some(p => onclick.includes(p))) {
+      if (['pgReportes','pgInventario','pgFinanzasMes','pgCierreDia'].some(p => onclick.includes(p))) {
         tab.style.display = 'none';
       }
     });
@@ -1199,12 +1199,6 @@ function _aplicarRestriccionesPorRol() {
     if (tabVD) tabVD.style.display = '';
   } else if (esSupervisor) {
     // Supervisor: puede ver inventario y reportes, no puede config ni usuarios
-    const pgSync = document.getElementById('pgSync');
-    if (pgSync) pgSync.style.display = 'none';
-    document.querySelectorAll('.nav-tab, .drawer-nav-item').forEach(tab => {
-      const onclick = tab.getAttribute('onclick') || '';
-      if (onclick.includes('pgSync')) tab.style.display = 'none';
-    });
     document.querySelectorAll('.btn-backup, .btn-restore').forEach(btn => {
       const oc = btn.getAttribute('onclick') || '';
       if (oc.includes('exportarDatos') || oc.includes('inputImportar') || oc.includes('inputFusionar')) {
@@ -1217,7 +1211,7 @@ function _aplicarRestriccionesPorRol() {
     });
   } else {
     // Admin de tienda (cliente con membresía): solo ve Venta, Inventario, Reportes, Ventas x Día
-    const pgsOcultar = ['pgSync', 'pgDestacados', 'pgFinanzasMes', 'pgCierreDia'];
+    const pgsOcultar = [ 'pgDestacados', 'pgFinanzasMes', 'pgCierreDia'];
     pgsOcultar.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
@@ -1251,7 +1245,7 @@ function _actualizarBadgeRol() {
 }
 
 function _quitarRestriccionesPorRol() {
-  ['pgReportes','pgInventario','pgVentasDiarias','pgSync','pgFinanzasMes','pgCierreDia'].forEach(id => {
+  ['pgReportes','pgInventario','pgVentasDiarias','pgFinanzasMes','pgCierreDia'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = '';
   });
   document.querySelectorAll('.nav-tab, .drawer-nav-item').forEach(el => { el.style.display = ''; });
@@ -1370,7 +1364,7 @@ async function enviarDatosNube() {
       dispositivo: _dispositivoId, efectivoInicial: typeof efectivoInicial!=='undefined'?efectivoInicial:0,
       inventarioInicial: typeof inventarioInicial!=='undefined'?inventarioInicial:0,
       productos, ventasDia, ventasSem, ventasMes, historial, pagos, ventasDiarias, restockLog: restockLog||[] };
-    await _sbPost('sync_snapshots', { id: _getTiendaId()+'_'+_dispositivoId, tienda_id: _getTiendaId(),
+    await _sbPost(, { id: _getTiendaId()+'_'+_dispositivoId, tienda_id: _getTiendaId(),
       dispositivo_id: _dispositivoId, datos: JSON.stringify(snap), created_at: new Date().toISOString() }, true);
     _registrarAccion('enviar_datos', productos.length+' productos');
     _dot('green'); toast('✅ Datos subidos. El otro telefono puede usar "Fusionar y actualizar".');
@@ -1384,7 +1378,7 @@ async function fusionarYActualizar() {
   if (!confirm('Fusiona los datos de todos los telefonos con los tuyos.\n¿Continuar?')) return;
   _dot('yellow'); toast('Fusionando...');
   try {
-    const todosSnaps = await _sbGet('sync_snapshots', { select:'*', tienda_id:'eq.'+_getTiendaId() });
+    const todosSnaps = await _sbGet(, { select:'*', tienda_id:'eq.'+_getTiendaId() });
     if (!todosSnaps||!todosSnaps.length) { toast('No hay datos en Supabase. Usa "Enviar datos" primero.',true); return; }
     const miSnap = { version:4, exportado:new Date().toISOString(), dispositivo:_dispositivoId,
       efectivoInicial:typeof efectivoInicial!=='undefined'?efectivoInicial:0,
@@ -1396,9 +1390,10 @@ async function fusionarYActualizar() {
     for (const r of remotos) resultado = _fusionarDos(resultado, r);
     await _aplicarDatos(resultado);
     const fusionId = _getTiendaId()+'_fusionado';
-    await _sbPost('sync_snapshots', { id:fusionId, tienda_id:_getTiendaId(), dispositivo_id:'fusion',
+    await _sbPost('
+', { id:fusionId, tienda_id:_getTiendaId(), dispositivo_id:'fusion',
       datos:JSON.stringify(resultado), created_at:new Date().toISOString() }, true);
-    for (const s of todosSnaps) { if (s.dispositivo_id!=='fusion') { await _sbDeleteFiltro('sync_snapshots',{id:'eq.'+s.id}).catch(()=>{}); } }
+    for (const s of todosSnaps) { if (s.dispositivo_id!=='fusion') { await _sbDeleteFiltro(,{id:'eq.'+s.id}).catch(()=>{}); } }
     _registrarAccion('fusionar', remotos.length+' telefonos');
     _dot('green'); toast('✅ Fusion completada. El otro telefono puede usar "Descargar datos actualizados".');
   } catch(e) { _dot('red'); toast('Error: '+e.message,true); console.error(e); }
@@ -1412,7 +1407,7 @@ async function descargarDatosActualizados() {
   _dot('yellow'); toast('Descargando...');
   try {
     const fusionId = _getTiendaId()+'_fusionado';
-    const rows = await _sbGet('sync_snapshots',{select:'datos',id:'eq.'+fusionId});
+    const rows = await _sbGet(,{select:'datos',id:'eq.'+fusionId});
     if (!rows||!rows.length) { toast('No hay datos fusionados. Usa "Fusionar y actualizar" primero.',true); return; }
     await _aplicarDatos(JSON.parse(rows[0].datos));
     setTimeout(async()=>{
@@ -1421,9 +1416,9 @@ async function descargarDatosActualizados() {
           efectivoInicial:typeof efectivoInicial!=='undefined'?efectivoInicial:0,
           inventarioInicial:typeof inventarioInicial!=='undefined'?inventarioInicial:0,
           productos,ventasDia,ventasSem,ventasMes,historial,pagos,ventasDiarias,restockLog:restockLog||[] };
-        await _sbPost('sync_snapshots',{id:_getTiendaId()+'_'+_dispositivoId,tienda_id:_getTiendaId(),
+        await _sbPost(,{id:_getTiendaId()+'_'+_dispositivoId,tienda_id:_getTiendaId(),
           dispositivo_id:_dispositivoId,datos:JSON.stringify(nuevoSnap),created_at:new Date().toISOString()},true);
-        await _sbDeleteFiltro('sync_snapshots',{id:'eq.'+fusionId});
+        await _sbDeleteFiltro(,{id:'eq.'+fusionId});
       } catch(e){}
     },1000);
     _registrarAccion('descargar_datos','');
@@ -1473,7 +1468,7 @@ async function _ejecutarLimpiarSupabase() {
   document.getElementById('modalLimpiarSupa').style.display='none';
   _dot('yellow'); toast('Limpiando Supabase...');
   try {
-    const tablas = ['sync_snapshots','sync_invites','ventas','pagos','restock_log','deleted_log','acciones_log'];
+    const tablas = [,'ventas','pagos','restock_log','deleted_log','acciones_log'];
     for (const t of tablas) {
       await fetch(_sbUrl()+'/rest/v1/'+t+'?id=neq.null',{method:'DELETE',headers:_headers({'Prefer':'return=minimal'})}).catch(()=>{});
       await fetch(_sbUrl()+'/rest/v1/'+t+'?fecha=neq.null',{method:'DELETE',headers:_headers({'Prefer':'return=minimal'})}).catch(()=>{});
@@ -1846,9 +1841,7 @@ async function _flushOfflineQueue() {
             break;
           case 'producto':
             await _sbPost('productos', d, true);
-            break;
-          case 'snapshot':
-            await _sbPost('sync_snapshots', d, true);
+            break
             break;
           case 'todo':
             await _subirHistorial();
@@ -2014,7 +2007,7 @@ async function _ejecutarSync(){
 }
 // =====================================================================
 //  🔄 SYNC AUTOMÁTICO EN TIEMPO REAL — usa el mismo mecanismo que funciona
-//  Basado en sync_snapshots (igual que los botones manuales que sí funcionan)
+//  Basado en  (igual que los botones manuales que sí funcionan)
 // =====================================================================
 let _ultimaFechaVenta    = null;
 let _ultimaFechaPago     = null;
@@ -2066,7 +2059,7 @@ async function _autoEnviarSnapshot() {
 
   _autoSyncSubiendo = true;
   try {
-    await _sbPost('sync_snapshots', snap, true);
+
     _snapTimestamp = new Date().toISOString();
     _dot('green');
   } catch(e) {
@@ -2085,7 +2078,7 @@ async function _autoFusionar() {
   _autoSyncFusionando = true;
   try {
     // Buscar snapshots de OTROS dispositivos de la misma tienda
-    const todosSnaps = await _sbGet('sync_snapshots', {
+    const todosSnaps = await _sbGet(, {
       select: '*',
       tienda_id: 'eq.' + _getTiendaId()
     }).catch(() => null);
@@ -2120,7 +2113,7 @@ async function _autoFusionar() {
 
     // Guardar fusión en Supabase y borrar snapshots individuales
     const fusionId = _getTiendaId() + '_fusionado';
-    await _sbPost('sync_snapshots', {
+    await _sbPost(, {
       id: fusionId, tienda_id: _getTiendaId(), dispositivo_id: 'fusion',
       datos: JSON.stringify(resultado), created_at: new Date().toISOString()
     }, true);
@@ -2128,7 +2121,7 @@ async function _autoFusionar() {
     // Borrar los snapshots individuales de otros dispositivos
     for (const s of todosSnaps) {
       if (s.dispositivo_id !== 'fusion' && s.dispositivo_id !== _dispositivoId) {
-        await _sbDeleteFiltro('sync_snapshots', { id: 'eq.' + s.id }).catch(() => {});
+        await _sbDeleteFiltro(, { id: 'eq.' + s.id }).catch(() => {});
       }
     }
 
@@ -2503,7 +2496,7 @@ function _iniciarRealtime() {
 
       // postgres_changes: snapshot completo al reconectar (respaldo)
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'sync_snapshots',
+        event: 'INSERT', schema: 'public',
         filter: 'tienda_id=eq.' + tiendaId
       }, (payload) => {
         const rec = payload.new || {};

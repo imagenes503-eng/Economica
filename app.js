@@ -913,7 +913,7 @@ function navTo(pgId, pushHistory = true) {
   const pgEl = document.getElementById(pgId);
   if (!pgEl) return;
   pgEl.classList.add('active');
-  const ids    = ['pgDash', 'pgInventario', 'pgReportes', 'pgDestacados', 'pgVentasDiarias', 'pgSync', 'pgAdmin', 'pgFinanzasMes','pgCierreDia'];
+  const ids    = ['pgDash', 'pgInventario', 'pgReportes', 'pgVentasDiarias', 'pgAdmin',];
   const invSubPgs = ['pgInvRegistrar','pgInvCapital','pgInvAnalisis','pgInvProductos'];
   const tabIdx = ids.indexOf(pgId);
   if (tabIdx >= 0) { const tabs = document.querySelectorAll('.nav-tab'); if (tabs[tabIdx]) tabs[tabIdx].classList.add('active'); }
@@ -922,11 +922,8 @@ function navTo(pgId, pushHistory = true) {
     const esSubInv = id === 'dniInventario' && invSubPgs.includes(pgId);
     if (el) el.classList.toggle('active', ids[i] === pgId || esSubInv);
   });
-  if (pgId === 'pgDestacados') renderDestacados();
   if (pgId === 'pgVentasDiarias') { initVentasDiarias(); autoRegistrarVentaDiaria(); renderVentasDiarias(); }
   if (pgId === 'pgAdmin' && typeof renderAdminPanel === 'function') renderAdminPanel();
-  if (pgId === 'pgFinanzasMes' && typeof renderFinanzasMes === 'function') renderFinanzasMes(pgId);
-  if (pgId === 'pgCierreDia' && typeof renderCierreDia === 'function') renderCierreDia(pgId);
   idbSet('vpos_pagina', pgId).catch(console.error);
   _paginaActual = pgId;
   renderPagina(pgId);
@@ -945,7 +942,7 @@ window.addEventListener('popstate', (e) => {
   const openModal = document.querySelector('.modal.open');
   if (openModal) { openModal.classList.remove('open'); history.pushState({}, '', location.href); return; }
   const pgId = e.state?.pgId || 'pgDash';
-  const validas = ['pgDash','pgInventario','pgInvRegistrar','pgInvCapital','pgInvAnalisis','pgInvProductos','pgReportes','pgDestacados','pgVentasDiarias','pgSync','pgAdmin','pgFinanzasMes','pgCierreDia'];
+  const validas = ['pgDash','pgInventario','pgInvRegistrar','pgInvCapital','pgInvAnalisis','pgInvProductos','pgReportes','pgVentasDiarias','pgAdmin'];
   navTo(validas.includes(pgId) ? pgId : 'pgDash', false);
 });
 
@@ -3212,7 +3209,7 @@ async function softReload() {
 
   // Cargar caché local primero (UI instantánea)
   await migrateAndLoad();
-  const validas = ['pgDash','pgInventario','pgReportes','pgDestacados','pgVentasDiarias','pgSync','pgFinanzasMes','pgCierreDia'];
+  const validas = ['pgDash','pgInventario','pgReportes','pgVentasDiarias'];
   navTo(validas.includes(_paginaActual) ? _paginaActual : 'pgDash');
   renderCarrito(); actualizarStats();
   const _pgActiva = document.querySelector('.page.active');
@@ -3489,7 +3486,6 @@ function actualizarTodo() {
   if (pgId === 'pgInvAnalisis')  { if (typeof renderInvAnalisis==='function') renderInvAnalisis(); }
   if (pgId === 'pgInvCapital')   { if (typeof actualizarInventarioInicialAuto==='function') actualizarInventarioInicialAuto(); if (typeof renderInvTotales==='function') renderInvTotales(); }
   if (pgId === 'pgReportes')     { renderVentas(); renderHistorial(); renderCritico(); renderPagos(); renderBalance(); }
-  if (pgId === 'pgDestacados')   { renderDestacados(); }
   if (pgId === 'pgVentasDiarias'){ renderVentasDiarias(); }
 }
 
@@ -3498,11 +3494,8 @@ function renderPagina(pgId) {
   if (pgId === 'pgDash')          { renderCajaPanel(); if (typeof renderDashboardPro === 'function') setTimeout(renderDashboardPro, 50); }
   if (pgId === 'pgInventario')    { renderInv(); actualizarCats(); poblarInvAnCat(); if (!document.getElementById('invAnDesde')?.value && !document.getElementById('invAnHasta')?.value) { invAnSetRango(30); } else { renderInvAnalisis(); } }
   if (pgId === 'pgReportes')      { renderVentas(); if (!document.getElementById('histDesde')?.value && !document.getElementById('histHasta')?.value) { histFiltroPreset('hoy'); } else { renderHistorial(); } renderCritico(); renderPagos(); renderBalance(); }
-  if (pgId === 'pgDestacados')    { renderDestacados(); }
   if (pgId === 'pgVentasDiarias') { renderVentasDiarias(); }
   if (pgId === 'pgAdmin' && typeof renderAdminPanel === 'function') renderAdminPanel();
-  if (pgId === 'pgFinanzasMes' && typeof renderFinanzasMes === 'function') renderFinanzasMes(pgId);
-  if (pgId === 'pgCierreDia' && typeof renderCierreDia === 'function') renderCierreDia(pgId);
   // Sub-páginas inventario
   if (pgId === 'pgInvCapital') { if (typeof actualizarInventarioInicialAuto==='function') actualizarInventarioInicialAuto(); if (typeof renderInvTotales==='function') renderInvTotales(); }
   if (pgId === 'pgInvAnalisis') { if (typeof poblarInvAnCat==='function') poblarInvAnCat(); if (typeof renderInvAnalisis==='function') renderInvAnalisis(); }
@@ -3547,7 +3540,7 @@ function renderPagina(pgId) {
     const inpInv = document.getElementById('inpInventarioInicial');
     if (inpInv) inpInv.value = inventarioInicial > 0 ? inventarioInicial : '';
 
-    const validas = ['pgDash','pgInventario','pgReportes','pgDestacados','pgVentasDiarias','pgSync','pgFinanzasMes','pgCierreDia'];
+    const validas = ['pgDash','pgInventario','pgReportes','pgVentasDiarias'];
     navTo(validas.includes(_paginaActual) ? _paginaActual : 'pgDash');
     // Establecer estado inicial en el historial del navegador
     try { history.replaceState({ pgId: _paginaActual }, '', '#' + _paginaActual); } catch(e) {}
