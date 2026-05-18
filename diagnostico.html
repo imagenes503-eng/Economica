@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔍 Diagnóstico POS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f0f4f8; color: #1e293b; padding: 16px; }
+  h1 { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: #0f172a; }
+  .sub { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+  .card h2 { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .field { margin-bottom: 8px; }
+  label { font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-bottom: 3px; }
+  input { width: 100%; border: 1px solid #cbd5e1; border-radius: 7px; padding: 8px 10px; font-size: 13px; background: #f8fafc; }
+  input:focus { outline: none; border-color: #3b82f6; background: #fff; }
+  .btn { width: 100%; padding: 11px; border-radius: 9px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .btn-blue { background: #2563eb; color: #fff; }
+  .btn-blue:disabled { background: #93c5fd; }
+  .btn-green { background: #16a34a; color: #fff; margin-top: 8px; }
+  .result { margin-top: 10px; }
+  .check { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+  .ok   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .err  { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
+  .warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .msg  { flex: 1; }
+  .msg strong { display: block; font-weight: 700; }
+  .msg small  { font-size: 11px; opacity: .85; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #bfdbfe; border-top-color: #2563eb; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .running { text-align: center; padding: 16px; color: #64748b; font-size: 13px; }
+  .section-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin: 12px 0 6px; }
+  .copy-btn { font-size: 10px; background: #e2e8f0; border: none; border-radius: 5px; padding: 3px 7px; cursor: pointer; float: right; }
+  pre { font-size: 10px; background: #f1f5f9; border-radius: 6px; padding: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 6px; max-height: 120px; overflow-y: auto; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-left: 6px; }
+  .badge-ok  { background: #dcfce7; color: #166534; }
+  .badge-err { background: #fee2e2; color: #991b1b; }
+  #summary { display: none; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Diagnóstico POS</h1>
+<p class="sub">Detecta problemas de Supabase, tablas, permisos y almacenamiento local</p>
+
+<div class="card">
+  <h2>⚙️ Configuración Supabase</h2>
+  <div class="field">
+    <label>URL del proyecto (se lee automático de tu POS)</label>
+    <input id="inpUrl" placeholder="https://xxxx.supabase.co" />
+  </div>
+  <div class="field">
+    <label>Anon Key (se lee automático de tu POS)</label>
+    <input id="inpKey" placeholder="eyJ..." />
+  </div>
+  <div class="field">
+    <label>Tienda ID (opcional — para verificar RLS)</label>
+    <input id="inpTienda" placeholder="despensa1" />
+  </div>
+  <button class="btn btn-blue" id="btnRun" onclick="runDiag()">▶ Ejecutar Diagnóstico Completo</button>
+</div>
+
+<div id="results"></div>
+
+<div id="summary" class="card">
+  <h2>📋 Reporte Completo</h2>
+  <button class="copy-btn" onclick="copiarReporte()">📋 Copiar</button>
+  <pre id="reporteTxt"></pre>
+</div>
+
+<script>
+// ── Auto-leer config del localStorage del POS ──
+window.onload = () => {
+  const url    = localStorage.getItem('vpos_supabaseUrl')  || 'https://bmusprrznlqkgzkpyfsi.supabase.co';
+  const key    = localStorage.getItem('vpos_supabaseKey')  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtdXNwcnJ6bmxxa2d6a3B5ZnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjM5NDQsImV4cCI6MjA4OTY5OTk0NH0.ohhqWt0RPsg4m5r8TlQAfUuR62CiGZImMBE1FB9c-7w';
+  const tienda = localStorage.getItem('vpos_tiendaId') || '';
+  document.getElementById('inpUrl').value    = url;
+  document.getElementById('inpKey').value    = key;
+  document.getElementById('inpTienda').value = tienda;
+};
+
+const TABLAS = ['productos','ventas','pagos','tiendas','sesiones','perfiles','sync_snapshots','ventas_diarias','restock_log','acciones_log'];
+const COLUMNAS_REQUERIDAS = {
+  productos: ['id','nom','cat','compra','venta','stock','min','cod','abrev','paquetes','lotes','_ts','tienda_id','img','stock_base'],
+  ventas:    ['id','fecha_iso','total','pago','vuelto','items','items_json','tienda_id'],
+  pagos:     ['id','fecha_iso','monto','cat','nom','nota','tienda_id'],
+};
+
+let _reporte = [];
+
+function addResult(html) {
+  document.getElementById('results').insertAdjacentHTML('beforeend', html);
+}
+
+function check(tipo, titulo, detalle) {
+  const icons = { ok: '✅', err: '❌', warn: '⚠️', info: 'ℹ️' };
+  _reporte.push(`[${tipo.toUpperCase()}] ${titulo}${detalle ? ' — ' + detalle : ''}`);
+  return `<div class="check ${tipo}">
+    <span class="icon">${icons[tipo]}</span>
+    <span class="msg"><strong>${titulo}</strong>${detalle ? `<small>${detalle}</small>` : ''}</span>
+  </div>`;
+}
+
+function sectionTitle(t) {
+  _reporte.push('\n── ' + t + ' ──');
+  return `<div class="section-title">${t}</div>`;
+}
+
+async function sbGet(url, key, tabla, params = {}) {
+  const qs = Object.entries(params).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  const r = await fetch(`${url}/rest/v1/${tabla}?${qs}&limit=1`, {
+    headers: { apikey: key, Authorization: 'Bearer ' + key, Accept: 'application/json' }
+  });
+  return { status: r.status, ok: r.ok, body: await r.text() };
+}
+
+async function sbPost(url, key, tabla, body) {
+  const r = await fetch(`${url}/rest/v1/${tabla}`, {
+    method: 'POST',
+    headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return { status: r.status, ok: r.ok, body: await r.text() };
+}
+
+async function sbDelete(url, key, tabla, id) {
+  const r = await fetch(`${url}/rest/v1/${tabla}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { apikey: key, Authorization: 'Bearer ' + key, Prefer: 'return=minimal' }
+  });
+  return { status: r.status, ok: r.ok };
+}
+
+async function runDiag() {
+  const url    = document.getElementById('inpUrl').value.trim().replace(/\/$/, '');
+  const key    = document.getElementById('inpKey').value.trim();
+  const tienda = document.getElementById('inpTienda').value.trim();
+
+  _reporte = [];
+  document.getElementById('results').innerHTML = `<div class="running"><div class="spinner"></div><br>Ejecutando diagnóstico…</div>`;
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('btnRun').disabled = true;
+
+  await new Promise(r => setTimeout(r, 100));
+  let html = '';
+
+  // ── 1. Config básica ──
+  html += sectionTitle('1. CONFIGURACIÓN');
+  if (!url || !url.startsWith('https://')) {
+    html += check('err', 'URL inválida', 'Debe empezar con https://');
+  } else {
+    html += check('ok', 'URL configurada', url);
+  }
+  if (!key || key.length < 50) {
+    html += check('err', 'Anon Key muy corta o vacía', 'Verifica la clave en Supabase → Settings → API');
+  } else {
+    html += check('ok', 'Anon Key configurada', key.slice(0,30) + '…');
+  }
+  if (tienda) html += check('info', 'Tienda ID', tienda);
+  else        html += check('warn', 'Tienda ID no detectada', 'Algunas verificaciones de RLS serán omitidas');
+
+  // ── 2. Conectividad ──
+  html += sectionTitle('2. CONECTIVIDAD');
+  try {
+    const r = await fetch(`${url}/rest/v1/`, { headers: { apikey: key } });
+    if (r.ok || r.status === 200) {
+      html += check('ok', 'Supabase responde correctamente', `HTTP ${r.status}`);
+    } else if (r.status === 401) {
+      html += check('err', 'API Key rechazada (401)', 'La anon key es incorrecta o expiró');
+    } else {
+      html += check('warn', `Supabase responde con HTTP ${r.status}`, 'Puede ser normal si la URL base no expone el root');
+    }
+  } catch(e) {
+    html += check('err', 'No se puede conectar a Supabase', e.message);
+    document.getElementById('results').innerHTML = html;
+    finalizar(html);
+    return;
+  }
+
+  // ── 3. Tablas ──
+  html += sectionTitle('3. TABLAS (existencia y permisos SELECT)');
+  for (const tabla of TABLAS) {
+    try {
+      const r = await sbGet(url, key, tabla, { limit: '1' });
+      if (r.ok || r.status === 200) {
+        let cols = '';
+        try {
+          const arr = JSON.parse(r.body);
+          if (arr.length > 0) cols = ' · columnas: ' + Object.keys(arr[0]).join(', ');
+          else cols = ' · vacía (sin filas aún)';
+        } catch(e) {}
+        html += check('ok', `Tabla "${tabla}" accesible`, `HTTP ${r.status}${cols}`);
+      } else if (r.status === 401 || r.status === 403) {
+        html += check('err', `Tabla "${tabla}" — sin permisos SELECT`, `HTTP ${r.status}: ${r.body.slice(0,120)}`);
+      } else if (r.status === 404) {
+        html += check('err', `Tabla "${tabla}" NO EXISTE`, 'Hay que crearla en Supabase');
+      } else {
+        html += check('warn', `Tabla "${tabla}" respondió HTTP ${r.status}`, r.body.slice(0,100));
+      }
+    } catch(e) {
+      html += check('err', `Tabla "${tabla}" — error de red`, e.message);
+    }
+  }
+
+  // ── 4. Columnas requeridas ──
+  html += sectionTitle('4. COLUMNAS REQUERIDAS EN PRODUCTOS');
+  try {
+    const r = await sbGet(url, key, 'productos', tienda ? { tienda_id: `eq.${tienda}`, limit: '1' } : { limit: '1' });
+    if (r.ok) {
+      const arr = JSON.parse(r.body);
+      if (arr.length > 0) {
+        const cols = Object.keys(arr[0]);
+        const requeridas = COLUMNAS_REQUERIDAS['productos'];
+        for (const col of requeridas) {
+          if (cols.includes(col)) html += check('ok', `Columna "${col}" existe`);
+          else html += check('err', `Columna "${col}" FALTA en tabla productos`, 'Hay que agregarla en Supabase → Table Editor');
+        }
+      } else {
+        html += check('info', 'Tabla productos vacía — no se pueden verificar columnas con datos', 'Se hará un test con INSERT de prueba');
+        // Intentar insert de prueba para ver qué columnas acepta
+        const testId = `_diag_test_${Date.now()}`;
+        const testRow = { id: testId, tienda_id: tienda || 'test', nom: 'TEST', cat: 'TEST', compra: 0, venta: 0, stock: 0, min: 0, cod: '', abrev: '', paquetes: [], lotes: [], _ts: Date.now(), stock_base: 0 };
+        const ri = await sbPost(url, key, 'productos', testRow);
+        if (ri.ok || ri.status === 201) {
+          html += check('ok', 'INSERT de prueba exitoso — todas las columnas aceptadas');
+          await sbDelete(url, key, 'productos', testId);
+        } else {
+          html += check('err', 'INSERT de prueba falló', ri.body.slice(0, 200));
+        }
+      }
+    }
+  } catch(e) {
+    html += check('warn', 'No se pudo verificar columnas de productos', e.message);
+  }
+
+  // ── 5. Test INSERT/UPDATE productos ──
+  html += sectionTitle('5. PERMISOS INSERT / UPDATE EN PRODUCTOS');
+  const testId2 = `_diag_${Date.now()}`;
+  const testProd = { id: testId2, tienda_id: tienda || 'test_diag', nom: 'PRODUCTO TEST', cat: 'TEST', compra: 1, venta: 2, stock: 0, min: 0, cod: '', abrev: '', paquetes: [{ id: '1', cant: 1, precio: 2, label: 'Unidad' }], lotes: [], _ts: Date.now(), stock_base: 0 };
+  try {
+    const ri = await sbPost(url, key, 'productos', testProd);
+    if (ri.ok || ri.status === 201) {
+      html += check('ok', 'INSERT en productos funciona correctamente');
+      // Verificar que se guardaron los paquetes
+      const rv = await sbGet(url, key, 'productos', { id: `eq.${testId2}` });
+      if (rv.ok) {
+        const arr = JSON.parse(rv.body);
+        if (arr.length > 0) {
+          const pkgs = arr[0].paquetes;
+          if (pkgs && (Array.isArray(pkgs) ? pkgs.length > 0 : JSON.stringify(pkgs).includes('Unidad'))) {
+            html += check('ok', 'Campo "paquetes" (presentaciones) se guarda y se lee correctamente ✅');
+          } else {
+            html += check('err', 'Campo "paquetes" se guardó vacío', 'Los paquetes/presentaciones no se están persistiendo en Supabase');
+          }
+          if (arr[0]._ts) html += check('ok', 'Campo "_ts" guardado correctamente');
+          else html += check('warn', 'Campo "_ts" es NULL o 0', 'Puede causar problemas en el merge de versiones');
+        }
+      }
+      // Limpiar
+      await sbDelete(url, key, 'productos', testId2);
+      html += check('info', 'Producto de prueba eliminado', '');
+    } else if (ri.status === 403 || ri.status === 401) {
+      html += check('err', 'Sin permiso para INSERT en productos', `HTTP ${ri.status} — Revisar RLS en Supabase`);
+      html += check('info', 'Para arreglar RLS', 'En Supabase → Authentication → Policies → tabla productos → Agregar policy INSERT para rol anon');
+    } else {
+      html += check('err', `INSERT falló con HTTP ${ri.status}`, ri.body.slice(0, 200));
+    }
+  } catch(e) {
+    html += check('err', 'Error al insertar producto de prueba', e.message);
+  }
+
+  // ── 6. Test INSERT ventas ──
+  html += sectionTitle('6. PERMISOS INSERT EN VENTAS');
+  const testVenta = { id: `_diag_v_${Date.now()}`, tienda_id: tienda || 'test_diag', fecha_iso: new Date().toISOString(), total: 0, pago: 0, vuelto: 0, items: 'TEST', items_json: [] };
+  try {
+    const rv = await sbPost(url, key, 'ventas', testVenta);
+    if (rv.ok || rv.status === 201) {
+      html += check('ok', 'INSERT en ventas funciona correctamente');
+      await sbDelete(url, key, 'ventas', testVenta.id);
+    } else if (rv.status === 403 || rv.status === 401) {
+      html += check('err', 'Sin permiso para INSERT en ventas', `HTTP ${rv.status} — Revisar RLS`);
+    } else {
+      html += check('err', `INSERT ventas falló HTTP ${rv.status}`, rv.body.slice(0, 150));
+    }
+  } catch(e) {
+    html += check('err', 'Error al insertar venta de prueba', e.message);
+  }
+
+  // ── 7. Test sync_snapshots ──
+  html += sectionTitle('7. SYNC SNAPSHOTS (sincronización multi-dispositivo)');
+  const testSnap = { id: `_diag_snap_${Date.now()}`, tienda_id: tienda || 'test_diag', dispositivo_id: 'diag', datos: JSON.stringify({ test: true }), created_at: new Date().toISOString() };
+  try {
+    const rs = await sbPost(url, key, 'sync_snapshots', testSnap);
+    if (rs.ok || rs.status === 201) {
+      html += check('ok', 'sync_snapshots INSERT funciona');
+      await sbDelete(url, key, 'sync_snapshots', testSnap.id);
+    } else if (rs.status === 403 || rs.status === 401) {
+      html += check('err', 'Sin permisos en sync_snapshots', `HTTP ${rs.status} — puede impedir sincronización entre dispositivos`);
+    } else {
+      html += check('warn', `sync_snapshots respondió HTTP ${rs.status}`, rs.body.slice(0, 100));
+    }
+  } catch(e) {
+    html += check('err', 'Error en sync_snapshots', e.message);
+  }
+
+  // ── 8. IndexedDB local ──
+  html += sectionTitle('8. ALMACENAMIENTO LOCAL (IndexedDB)');
+  try {
+    const req = indexedDB.open('DespensaEconomicaDB', 2);
+    await new Promise((res, rej) => {
+      req.onsuccess = e => {
+        const db = e.target.result;
+        const stores = Array.from(db.objectStoreNames);
+        if (stores.includes('kv')) html += check('ok', 'IndexedDB abierta correctamente', 'Stores: ' + stores.join(', '));
+        else html += check('err', 'Object store "kv" no existe en IndexedDB', 'Los datos no se pueden guardar localmente');
+        // Leer productos guardados
+        const tx = db.transaction('kv', 'readonly');
+        const st = tx.objectStore('kv');
+        const gr = st.get('vpos_productos');
+        gr.onsuccess = () => {
+          const prods = gr.result;
+          if (Array.isArray(prods) && prods.length > 0) {
+            const conPaquetes = prods.filter(p => p.paquetes && p.paquetes.length > 0).length;
+            html += check('ok', `${prods.length} productos en caché local`, `${conPaquetes} con presentaciones guardadas`);
+            // Verificar si algún producto perdió sus paquetes
+            const sinPaquetes = prods.filter(p => (!p.paquetes || p.paquetes.length === 0) && p.venta > 0);
+            if (sinPaquetes.length > 0) {
+              html += check('warn', `${sinPaquetes.length} productos SIN presentaciones en caché`, 'Posible efecto del bug: ' + sinPaquetes.map(p=>p.nom).slice(0,3).join(', '));
+            }
+          } else {
+            html += check('warn', 'No hay productos en caché local', 'Se cargarán desde Supabase al iniciar sesión');
+          }
+          db.close();
+          res();
+        };
+        gr.onerror = () => { res(); };
+      };
+      req.onerror = e => {
+        html += check('err', 'No se puede abrir IndexedDB', e.target.error?.message || 'error desconocido');
+        res();
+      };
+    });
+  } catch(e) {
+    html += check('err', 'Error al acceder a IndexedDB', e.message);
+  }
+
+  // ── 9. localStorage del POS ──
+  html += sectionTitle('9. DATOS EN localStorage DEL POS');
+  const lsKeys = ['vpos_supabaseUrl','vpos_supabaseKey','vpos_tiendaId','vpos_migrated_to_idb','vpos_reporteFechaDia','vpos_ultimoSync'];
+  for (const k of lsKeys) {
+    const v = localStorage.getItem(k);
+    if (v) html += check('ok', k, v.length > 60 ? v.slice(0,60)+'…' : v);
+    else   html += check('info', k + ' — no encontrado', 'Puede ser normal si aún no está configurado');
+  }
+
+  finalizar(html);
+}
+
+function finalizar(html) {
+  document.getElementById('results').innerHTML = html;
+  document.getElementById('btnRun').disabled = false;
+
+  const errores = (_reporte.filter(l => l.startsWith('[ERR'))).length;
+  const warns   = (_reporte.filter(l => l.startsWith('[WARN'))).length;
+
+  const resumen = errores > 0
+    ? `<div class="check err"><span class="icon">❌</span><span class="msg"><strong>${errores} error(es) encontrado(s)</strong><small>Revisa los ítems en rojo arriba</small></span></div>`
+    : warns > 0
+    ? `<div class="check warn"><span class="icon">⚠️</span><span class="msg"><strong>${warns} advertencia(s)</strong><small>El sistema puede funcionar con limitaciones</small></span></div>`
+    : `<div class="check ok"><span class="icon">✅</span><span class="msg"><strong>Todo parece estar bien</strong><small>No se detectaron errores críticos</small></span></div>`;
+
+  document.getElementById('results').insertAdjacentHTML('afterbegin',
+    `<div class="card">${resumen}<button class="btn btn-green" onclick="runDiag()">🔄 Re-ejecutar</button></div>`
+  );
+
+  document.getElementById('reporteTxt').textContent = _reporte.join('\n');
+  document.getElementById('summary').style.display = 'block';
+}
+
+function copiarReporte() {
+  navigator.clipboard.writeText(document.getElementById('reporteTxt').textContent)
+    .then(() => alert('✅ Reporte copiado'))
+    .catch(() => alert('Selecciona el texto manualmente'));
+}
+</script>
+</body>
+</html>
