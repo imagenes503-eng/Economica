@@ -2581,17 +2581,19 @@ function _iniciarRealtime() {
           fechaStr: v.fechaStr || (v.fechaISO ? new Date(v.fechaISO).toLocaleString('es-SV') : '—')
         }));
         historial = nuevo;
+        // primero actualizar ventasDiarias para evitar recalcular con datos viejos
+        if (payload.ventasDiarias !== undefined) {
+          ventasDiarias = payload.ventasDiarias || [];
+          idbSet('vpos_ventasDiarias', ventasDiarias).catch(() => {});
+        }
         if (typeof recalcularTodo === 'function') {
           recalcularTodo();
         }
         if (typeof renderDashboard === 'function') {
           renderDashboard();
         }
-        // FIX: si el payload incluye ventasDiarias (ej: al borrar historial completo),
-        //      también limpiarlas para que el capital total quede consistente entre teléfonos
-        if (payload.ventasDiarias !== undefined) {
-          ventasDiarias = payload.ventasDiarias || [];
-          idbSet('vpos_ventasDiarias', ventasDiarias).catch(() => {});
+        if (typeof actualizarTodo === 'function') {
+          actualizarTodo();
         }
         // ── FIX DESCUADRE: aplicar stock restaurado por devolución ──
         // Cuando un teléfono hace una devolución, el broadcast trae los productos
