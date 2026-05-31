@@ -1,1030 +1,906 @@
 // =====================================================================
-//  🏭 MÓDULO DE PROVEEDORES — Despensa Económica
+//  📦 MÓDULO DE PROVEEDORES — Despensa Económica
 //
-//  FUNCIONALIDADES:
-//  ✅ Registrar proveedores con nombre y días de pago (Lun–Vie)
-//  ✅ Editar y eliminar proveedores
-//  ✅ Registrar retiros por proveedor
-//  ✅ Persistencia 100% en localStorage (vpos_proveedores / vpos_retiros)
+//  SECCIONES:
+//  🛒 Preventas  — días en que el proveedor pasa a tomar pedido
+//  🚚 Entregas   — días en que el proveedor trae el producto
+//  💾 Persistencia 100% localStorage
 // =====================================================================
 
-// ── Inyección de estilos ──────────────────────────────────────────────
 (function _inyectarEstilosProveedores() {
   if (document.getElementById('proveedoresStyles')) return;
   const s = document.createElement('style');
   s.id = 'proveedoresStyles';
   s.textContent = `
 
-    /* ══════════════════════════════════════
-       LAYOUT GENERAL
-    ══════════════════════════════════════ */
-    #pgFinanzasMes { padding: 0 0 80px 0; }
+    #pgFinanzasMes { padding: 0 0 90px 0; }
 
-    /* ── Hero ── */
+    /* ══ HERO ════════════════════════════════════════════════════════ */
     .pv-hero {
-      background: linear-gradient(135deg, #052e16 0%, #14532d 60%, #166534 100%);
-      padding: 22px 18px 20px;
-      margin-bottom: 18px;
+      background: linear-gradient(145deg, #020d07 0%, #052e16 45%, #0a3d20 75%, #14532d 100%);
+      padding: 24px 18px 22px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pv-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(134,239,172,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .pv-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30px; left: -20px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(22,163,74,0.1) 0%, transparent 70%);
+      pointer-events: none;
     }
     .pv-hero-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+      margin-bottom: 18px;
+      position: relative; z-index: 1;
     }
-    .pv-hero-title {
-      font-size: 20px;
-      font-weight: 900;
-      color: #fff;
-      font-family: Nunito, sans-serif;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      line-height: 1.2;
-    }
-    .pv-hero-sub {
-      font-size: 12px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.65);
-      font-family: Nunito, sans-serif;
-      margin-top: 3px;
-    }
-
-    /* ── Stat cards en hero ── */
-    .pv-stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    @media (min-width: 560px) {
-      .pv-stats-row { grid-template-columns: repeat(3, 1fr); }
-    }
-    .pv-stat-card {
-      background: rgba(255,255,255,0.11);
-      border: 1.5px solid rgba(255,255,255,0.18);
-      border-radius: 14px;
-      padding: 13px 14px;
-      backdrop-filter: blur(8px);
-    }
-    .pv-stat-label {
+    .pv-hero-eyebrow {
       font-size: 10px;
       font-weight: 900;
-      color: rgba(255,255,255,0.6);
+      color: #4ade80;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.5px;
       font-family: Nunito, sans-serif;
       margin-bottom: 5px;
     }
-    .pv-stat-val {
+    .pv-hero-title {
       font-size: 22px;
       font-weight: 900;
       color: #fff;
       font-family: Nunito, sans-serif;
-      line-height: 1;
+      line-height: 1.15;
+      letter-spacing: -0.3px;
     }
-    .pv-stat-val.verde  { color: #86efac; }
-    .pv-stat-val.amarillo { color: #fde68a; }
-    .pv-stat-sub {
-      font-size: 11px;
+    .pv-hero-sub {
+      font-size: 12px;
       font-weight: 700;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255,255,255,0.5);
       font-family: Nunito, sans-serif;
-      margin-top: 3px;
+      margin-top: 4px;
     }
 
-    /* ── Cuerpo principal ── */
+    /* ── Stat cards ── */
+    .pv-stats-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      position: relative; z-index: 1;
+    }
+    @media (min-width: 480px) { .pv-stats-row { grid-template-columns: repeat(4, 1fr); } }
+    .pv-stat-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      padding: 14px 13px;
+      backdrop-filter: blur(10px);
+      transition: background 0.2s;
+    }
+    .pv-stat-card:hover { background: rgba(255,255,255,0.11); }
+    .pv-stat-label {
+      font-size: 9px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-family: Nunito, sans-serif;
+      margin-bottom: 6px;
+    }
+    .pv-stat-val {
+      font-size: 26px;
+      font-weight: 900;
+      font-family: Nunito, sans-serif;
+      line-height: 1;
+    }
+    .pv-stat-val.verde   { color: #86efac; }
+    .pv-stat-val.azul    { color: #93c5fd; }
+    .pv-stat-val.naranja { color: #fcd34d; }
+    .pv-stat-val.blanco  { color: #fff; }
+    .pv-stat-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.38);
+      font-family: Nunito, sans-serif;
+      margin-top: 4px;
+    }
+
+    /* ══ CUERPO ═══════════════════════════════════════════════════════ */
     .pv-body {
       padding: 0 14px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 20px;
     }
 
-    /* ── Panel genérico ── */
-    .pv-panel {
-      background: var(--surface2, #f8fafc);
-      border: 1.5px solid var(--border, #e2e8f0);
-      border-radius: 18px;
+    /* ── Alerta día de hoy ── */
+    .pv-hoy-card {
+      border-radius: 16px;
+      padding: 0;
       overflow: hidden;
+      border: 1.5px solid;
     }
-    .pv-panel-header {
+    .pv-hoy-card.verde  { border-color: #bbf7d0; background: linear-gradient(135deg,#f0fdf4,#dcfce7); }
+    .pv-hoy-card.gris   { border-color: #e2e8f0; background: var(--surface2,#f8fafc); }
+    .pv-hoy-header {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 13px 16px;
-      border-bottom: 1.5px solid var(--border, #e2e8f0);
-      background: var(--surface, #fff);
+      padding: 13px 15px 10px;
     }
-    .pv-panel-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-      flex-shrink: 0;
+    .pv-hoy-icon-wrap {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
-    .pv-panel-title {
-      font-size: 14px;
+    .pv-hoy-icon-wrap.verde  { background: #dcfce7; }
+    .pv-hoy-icon-wrap.gris   { background: #f1f5f9; }
+    .pv-hoy-title {
+      font-size: 13px;
       font-weight: 900;
-      color: var(--text, #0f172a);
       font-family: Nunito, sans-serif;
-      flex: 1;
     }
-    .pv-panel-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 24px;
-      height: 24px;
-      padding: 0 7px;
+    .pv-hoy-title.verde { color: #14532d; }
+    .pv-hoy-title.gris  { color: var(--text-muted,#64748b); }
+    .pv-hoy-sub {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: Nunito, sans-serif;
+      color: var(--text-muted,#64748b);
+      margin-top: 1px;
+    }
+    .pv-hoy-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 15px 13px;
+    }
+    .pv-hoy-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 12px;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 900;
       font-family: Nunito, sans-serif;
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
     }
-    .pv-panel-body { padding: 16px; }
+    .pv-hoy-chip.prev { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+    .pv-hoy-chip.entr { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 
-    /* ── Inputs ── */
-    .pv-field { display: flex; flex-direction: column; gap: 5px; }
+    /* ══ PANEL GENÉRICO ═══════════════════════════════════════════════ */
+    .pv-panel {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1.5px solid var(--border,#e2e8f0);
+      background: var(--surface2,#f8fafc);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .pv-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 15px 17px 14px;
+      background: var(--surface,#fff);
+      border-bottom: 1.5px solid var(--border,#e2e8f0);
+    }
+    .pv-panel-icon-wrap {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .pv-panel-icon-wrap.azul    { background: #dbeafe; }
+    .pv-panel-icon-wrap.naranja { background: #fef3c7; }
+    .pv-panel-icon-wrap.verde   { background: #dcfce7; }
+    .pv-panel-titles { flex: 1; }
+    .pv-panel-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text,#0f172a);
+      font-family: Nunito, sans-serif;
+      line-height: 1.1;
+    }
+    .pv-panel-desc {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted,#64748b);
+      font-family: Nunito, sans-serif;
+      margin-top: 2px;
+    }
+    .pv-count-badge {
+      min-width: 26px; height: 26px;
+      padding: 0 8px;
+      border-radius: 30px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900;
+      font-family: Nunito, sans-serif;
+    }
+    .pv-count-badge.azul    { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+    .pv-count-badge.naranja { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+    .pv-panel-body { padding: 16px 17px; }
+
+    /* ── Formulario ── */
+    .pv-form-grid {
+      display: grid;
+      gap: 13px;
+      margin-bottom: 14px;
+    }
     .pv-field label {
+      display: block;
       font-size: 10px;
       font-weight: 900;
-      color: var(--text-muted, #64748b);
+      color: var(--text-muted,#64748b);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       font-family: Nunito, sans-serif;
+      margin-bottom: 6px;
     }
     .pv-inp {
       width: 100%;
-      padding: 11px 13px;
-      border: 1.5px solid var(--border, #e2e8f0);
-      border-radius: 11px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border,#e2e8f0);
+      border-radius: 12px;
       font-size: 15px;
       font-weight: 700;
       font-family: Nunito, sans-serif;
-      color: var(--text, #0f172a);
-      background: var(--surface, #fff);
+      color: var(--text,#0f172a);
+      background: var(--surface,#fff);
       box-sizing: border-box;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .pv-inp:focus {
-      border-color: #16a34a;
-      box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
-    }
-    .pv-inp.edit-mode {
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
-    }
-    .pv-inp-select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 34px;
-    }
+    .pv-inp:focus { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.1); }
+    .pv-inp.azul:focus   { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+    .pv-inp.naranja:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.1); }
+    .pv-inp.edit-azul    { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.08); }
+    .pv-inp.edit-naranja { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.08); }
 
-    /* ── Selector de días ── */
+    /* ── Días pill buttons ── */
+    .pv-dias-wrap { display: flex; flex-direction: column; gap: 7px; }
     .pv-dias-label {
       font-size: 10px;
       font-weight: 900;
-      color: var(--text-muted, #64748b);
+      color: var(--text-muted,#64748b);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       font-family: Nunito, sans-serif;
-      margin-bottom: 8px;
-      display: block;
     }
-    .pv-dias-grid {
+    .pv-dias-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 7px;
     }
-    .pv-dia-btn {
-      padding: 8px 14px;
-      border-radius: 30px;
-      border: 2px solid var(--border, #e2e8f0);
-      background: var(--surface, #fff);
+    .pv-dia-pill {
+      padding: 8px 15px;
+      border-radius: 40px;
+      border: 2px solid var(--border,#e2e8f0);
+      background: var(--surface,#fff);
       font-size: 12px;
       font-weight: 900;
       font-family: Nunito, sans-serif;
-      color: var(--text-muted, #64748b);
+      color: var(--text-muted,#94a3b8);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all .15s;
       user-select: none;
+      letter-spacing: 0.2px;
     }
-    .pv-dia-btn:hover {
-      border-color: #16a34a;
-      color: #16a34a;
-      background: #f0fdf4;
-    }
-    .pv-dia-btn.activo {
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      border-color: #15803d;
+    .pv-dia-pill:hover { border-color: #94a3b8; color: var(--text,#0f172a); }
+
+    /* Activo azul (preventas) */
+    .pv-dia-pill.on-azul {
+      background: linear-gradient(135deg,#3b82f6,#2563eb);
+      border-color: #2563eb;
       color: #fff;
-      box-shadow: 0 2px 8px rgba(22,163,74,0.3);
+      box-shadow: 0 3px 10px rgba(59,130,246,.35);
     }
-    .pv-dia-btn.edit-activo {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+    /* Activo naranja (entregas) */
+    .pv-dia-pill.on-naranja {
+      background: linear-gradient(135deg,#f59e0b,#d97706);
       border-color: #d97706;
       color: #fff;
-      box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+      box-shadow: 0 3px 10px rgba(245,158,11,.35);
+    }
+    /* Edición azul */
+    .pv-dia-pill.edit-azul {
+      background: linear-gradient(135deg,#60a5fa,#3b82f6);
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(59,130,246,.25);
+      opacity: 0.85;
+    }
+    /* Edición naranja */
+    .pv-dia-pill.edit-naranja {
+      background: linear-gradient(135deg,#fbbf24,#f59e0b);
+      border-color: #f59e0b;
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(245,158,11,.25);
+      opacity: 0.85;
     }
 
-    /* ── Botones principales ── */
-    .btn-pv-primary {
+    /* ── Botones de acción principal ── */
+    .btn-pv {
       width: 100%;
       padding: 13px;
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      color: #fff;
       border: none;
-      border-radius: 13px;
+      border-radius: 14px;
       font-size: 14px;
       font-weight: 900;
       font-family: Nunito, sans-serif;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(22,163,74,0.3);
-      transition: all 0.15s;
+      transition: all .15s;
       letter-spacing: 0.2px;
     }
-    .btn-pv-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(22,163,74,0.4); }
-    .btn-pv-primary:active { transform: translateY(0); }
-    .btn-pv-primary.edit-mode {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+    .btn-pv:hover { transform: translateY(-1px); }
+    .btn-pv:active { transform: translateY(0); }
+
+    .btn-pv-azul {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59,130,246,.35);
     }
-    .btn-pv-primary.edit-mode:hover { box-shadow: 0 6px 18px rgba(245,158,11,0.4); }
+    .btn-pv-azul:hover { box-shadow: 0 6px 20px rgba(59,130,246,.45); }
+
+    .btn-pv-naranja {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(245,158,11,.35);
+    }
+    .btn-pv-naranja:hover { box-shadow: 0 6px 20px rgba(245,158,11,.45); }
+
+    .btn-pv-edit-azul {
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(96,165,250,.3);
+    }
+    .btn-pv-edit-naranja {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(251,191,36,.3);
+    }
 
     .btn-pv-ghost {
       width: 100%;
       padding: 11px;
       background: transparent;
-      color: var(--text-muted, #64748b);
-      border: 1.5px solid var(--border, #e2e8f0);
-      border-radius: 13px;
+      color: var(--text-muted,#64748b);
+      border: 1.5px solid var(--border,#e2e8f0);
+      border-radius: 14px;
       font-size: 13px;
       font-weight: 900;
       font-family: Nunito, sans-serif;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all .15s;
+      margin-top: 7px;
     }
-    .btn-pv-ghost:hover { background: var(--surface, #f8fafc); border-color: #94a3b8; }
+    .btn-pv-ghost:hover { border-color:#94a3b8; background: var(--surface,#fff); }
 
-    /* ── Banner de modo edición ── */
+    /* ── Banner edición ── */
     .pv-edit-banner {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 9px;
       padding: 10px 14px;
-      background: #fffbeb;
-      border: 1.5px solid #fde68a;
-      border-radius: 11px;
-      margin-bottom: 14px;
-      font-size: 12px;
-      font-weight: 900;
+      border-radius: 12px;
+      font-size: 12px; font-weight: 900;
       font-family: Nunito, sans-serif;
-      color: #92400e;
+      margin-bottom: 13px;
     }
+    .pv-edit-banner.azul    { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
+    .pv-edit-banner.naranja { background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; }
 
-    /* ── Tabla de proveedores ── */
-    .pv-table-wrap {
-      overflow-x: auto;
-      border-radius: 0 0 14px 14px;
-    }
-    .pv-table {
+    /* ══ TABLA ═════════════════════════════════════════════════════ */
+    .pv-table-scroll { overflow-x: auto; }
+    table.pv-tbl {
       width: 100%;
       border-collapse: collapse;
       font-family: Nunito, sans-serif;
     }
-    .pv-table thead tr {
-      background: linear-gradient(135deg, #052e16, #14532d);
-    }
-    .pv-table thead th {
-      padding: 11px 14px;
-      font-size: 11px;
+    table.pv-tbl thead tr { background: var(--surface,#fff); }
+    table.pv-tbl thead th {
+      padding: 10px 14px;
+      font-size: 10px;
       font-weight: 900;
-      color: rgba(255,255,255,0.85);
+      color: var(--text-muted,#94a3b8);
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.7px;
       text-align: left;
+      border-bottom: 2px solid var(--border,#e2e8f0);
       white-space: nowrap;
     }
-    .pv-table thead th:last-child { text-align: center; }
-    .pv-table tbody tr {
-      border-bottom: 1px solid var(--border, #e2e8f0);
-      transition: background 0.12s;
+    table.pv-tbl thead th:last-child { text-align: right; }
+    table.pv-tbl tbody tr {
+      border-bottom: 1px solid var(--border,#f1f5f9);
+      transition: background .1s;
     }
-    .pv-table tbody tr:last-child { border-bottom: none; }
-    .pv-table tbody tr:hover { background: #f0fdf4; }
-    .pv-table tbody td {
-      padding: 12px 14px;
+    table.pv-tbl tbody tr:last-child { border-bottom: none; }
+    table.pv-tbl tbody tr:hover { background: rgba(0,0,0,0.02); }
+    table.pv-tbl tbody tr.editing { background: #f8faff; }
+    table.pv-tbl tbody td {
+      padding: 13px 14px;
       font-size: 13px;
       font-weight: 700;
-      color: var(--text, #0f172a);
+      color: var(--text,#0f172a);
       vertical-align: middle;
     }
-    .pv-table tbody td:last-child { text-align: center; white-space: nowrap; }
-    .pv-table-empty {
-      padding: 28px 20px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted, #64748b);
-      font-family: Nunito, sans-serif;
-    }
+    table.pv-tbl tbody td:last-child { text-align: right; white-space: nowrap; }
 
-    /* ── Nombre en tabla ── */
-    .pv-nombre-cell {
-      display: flex;
-      align-items: center;
-      gap: 9px;
+    /* ── Celda nombre con avatar ── */
+    .pv-cell-nombre {
+      display: flex; align-items: center; gap: 11px;
     }
     .pv-avatar {
-      width: 34px;
-      height: 34px;
+      width: 36px; height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #16a34a, #059669);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 900;
-      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900;
       font-family: Nunito, sans-serif;
-      flex-shrink: 0;
+      color: #fff; flex-shrink: 0;
       text-transform: uppercase;
     }
-    .pv-nombre-text {
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--text, #0f172a);
+    .pv-avatar.azul    { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .pv-avatar.naranja { background: linear-gradient(135deg,#f59e0b,#b45309); }
+    .pv-nombre-main {
+      font-size: 14px; font-weight: 900;
+      color: var(--text,#0f172a);
       font-family: Nunito, sans-serif;
     }
-
-    /* ── Chips de días ── */
-    .pv-dias-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
+    .pv-nombre-editing-tag {
+      font-size: 9px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      font-family: Nunito, sans-serif;
+      margin-top: 2px;
     }
-    .pv-dia-chip {
+    .pv-nombre-editing-tag.azul    { color: #3b82f6; }
+    .pv-nombre-editing-tag.naranja { color: #f59e0b; }
+
+    /* ── Chips de días en tabla ── */
+    .pv-chips-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .pv-chip {
       padding: 3px 10px;
       border-radius: 20px;
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       font-family: Nunito, sans-serif;
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-      white-space: nowrap;
     }
+    .pv-chip.azul    { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+    .pv-chip.naranja { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
 
-    /* ── Botones de acción en tabla ── */
-    .btn-pv-edit {
-      padding: 6px 11px;
-      border: 1.5px solid #fde68a;
-      background: #fffbeb;
-      color: #92400e;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 900;
+    /* ── Botones edit/del en tabla ── */
+    .btn-tbl {
+      padding: 6px 12px;
+      border-radius: 9px;
+      font-size: 11px; font-weight: 900;
       font-family: Nunito, sans-serif;
       cursor: pointer;
-      transition: all 0.12s;
+      transition: all .12s;
+      border: 1.5px solid;
+    }
+    .btn-tbl-edit-azul {
+      background: #eff6ff; color: #1d4ed8;
+      border-color: #bfdbfe;
       margin-right: 5px;
     }
-    .btn-pv-edit:hover { background: #fef3c7; border-color: #f59e0b; }
-    .btn-pv-del {
-      padding: 6px 11px;
-      border: 1.5px solid #fecaca;
-      background: #fef2f2;
-      color: #991b1b;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 900;
+    .btn-tbl-edit-azul:hover { background: #dbeafe; }
+    .btn-tbl-edit-naranja {
+      background: #fffbeb; color: #92400e;
+      border-color: #fde68a;
+      margin-right: 5px;
+    }
+    .btn-tbl-edit-naranja:hover { background: #fef3c7; }
+    .btn-tbl-del {
+      background: #fef2f2; color: #991b1b;
+      border-color: #fecaca;
+    }
+    .btn-tbl-del:hover { background: #fee2e2; }
+
+    /* ── Empty state ── */
+    .pv-empty {
+      padding: 30px 20px;
+      text-align: center;
+      font-size: 13px; font-weight: 700;
+      color: var(--text-muted,#94a3b8);
       font-family: Nunito, sans-serif;
-      cursor: pointer;
-      transition: all 0.12s;
     }
-    .btn-pv-del:hover { background: #fee2e2; border-color: #f87171; }
+    .pv-empty-icon { font-size: 30px; margin-bottom: 8px; }
 
-    /* ── Sección retiros ── */
-    .pv-retiro-form {
-      display: grid;
-      gap: 12px;
+    /* ── Separador de sección ── */
+    .pv-section-sep {
+      display: flex; align-items: center; gap: 10px;
+      margin: 4px 0 14px;
     }
-    .pv-retiro-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 400px) {
-      .pv-retiro-row { grid-template-columns: 1fr; }
-    }
-
-    /* ── Lista de retiros ── */
-    .pv-retiro-list {
-      max-height: 300px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #bbf7d0 transparent;
-    }
-    .pv-retiro-list::-webkit-scrollbar { width: 4px; }
-    .pv-retiro-list::-webkit-scrollbar-thumb { background: #bbf7d0; border-radius: 10px; }
-
-    .pv-retiro-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 11px 14px;
-      border-bottom: 1px solid var(--border, #e2e8f0);
+    .pv-section-sep span {
+      font-size: 10px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.8px;
       font-family: Nunito, sans-serif;
-      transition: background 0.12s;
-    }
-    .pv-retiro-item:last-child { border-bottom: none; }
-    .pv-retiro-item:hover { background: #f0fdf4; }
-    .pv-retiro-proveedor {
-      font-size: 13px;
-      font-weight: 900;
-      color: var(--text, #0f172a);
-      min-width: 80px;
-    }
-    .pv-retiro-nota {
-      flex: 1;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted, #64748b);
-    }
-    .pv-retiro-fecha {
-      font-size: 11px;
-      font-weight: 900;
-      color: var(--text-muted, #64748b);
+      color: var(--text-muted,#94a3b8);
       white-space: nowrap;
     }
-    .pv-retiro-monto {
-      font-size: 14px;
-      font-weight: 900;
-      color: #dc2626;
-      white-space: nowrap;
-    }
-    .btn-pv-retiro-del {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted, #94a3b8);
-      font-size: 14px;
-      padding: 3px 6px;
-      border-radius: 6px;
-      transition: all 0.1s;
-    }
-    .btn-pv-retiro-del:hover { background: rgba(220,38,38,0.1); color: #dc2626; }
-
-    .pv-retiro-total {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 11px 14px;
-      background: #fef2f2;
-      border-top: 1.5px solid #fecaca;
-      font-family: Nunito, sans-serif;
-      border-radius: 0 0 14px 14px;
-    }
-    .pv-retiro-total span:first-child {
-      font-size: 12px;
-      font-weight: 900;
-      color: #991b1b;
-    }
-    .pv-retiro-total span:last-child {
-      font-size: 16px;
-      font-weight: 900;
-      color: #dc2626;
-    }
-
-    /* ── Divider / separador de sección ── */
-    .pv-sep {
-      font-size: 11px;
-      font-weight: 900;
-      color: var(--text-muted, #64748b);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      font-family: Nunito, sans-serif;
-      padding: 6px 0 8px;
-      border-bottom: 1.5px solid var(--border, #e2e8f0);
-      margin-bottom: 12px;
-    }
-
-    /* ── Días de la semana en la fila de hoy ── */
-    .pv-hoy-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 12px 14px;
-      background: linear-gradient(135deg,#f0fdf4,#dcfce7);
-      border: 1.5px solid #bbf7d0;
-      border-radius: 13px;
-      margin-bottom: 4px;
-      font-family: Nunito, sans-serif;
-    }
-    .pv-hoy-icon { font-size: 20px; flex-shrink: 0; }
-    .pv-hoy-text { flex: 1; }
-    .pv-hoy-title {
-      font-size: 13px;
-      font-weight: 900;
-      color: #14532d;
-      margin-bottom: 4px;
-    }
-    .pv-hoy-provs {
-      font-size: 12px;
-      font-weight: 700;
-      color: #15803d;
-    }
-    .pv-hoy-empty {
-      font-size: 12px;
-      font-weight: 700;
-      color: #6b7280;
+    .pv-section-sep::before, .pv-section-sep::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border,#e2e8f0);
     }
   `;
   document.head.appendChild(s);
 })();
 
 // ══════════════════════════════════════════════════════════════════════
-//  ESTADO
+//  CONSTANTES & ESTADO
 // ══════════════════════════════════════════════════════════════════════
 
-let _pvProveedores = [];   // [{ id, nombre, dias:[] }]
-let _pvRetiros     = [];   // [{ id, proveedorId, proveedorNombre, fecha, monto, nota }]
-let _pvEditandoId  = null; // ID del proveedor en edición
+const _PV_DIAS       = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+const _PV_ABREV      = { Lunes:'Lun', Martes:'Mar', 'Miércoles':'Mié', Jueves:'Jue', Viernes:'Vie' };
+const _PV_LS_PREV    = 'vpos_preventas';
+const _PV_LS_ENTR    = 'vpos_entregas';
 
-const _PV_KEY_PROV    = 'vpos_proveedores';
-const _PV_KEY_RETIROS = 'vpos_retiros';
-const _PV_DIAS        = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
-const _PV_DIA_ABREV   = { 'Lunes':'Lun','Martes':'Mar','Miércoles':'Mié','Jueves':'Jue','Viernes':'Vie' };
+let _pvPreventas     = [];   // { id, nombre, dias[] }
+let _pvEntregas      = [];
+let _pvEditPrevId    = null;
+let _pvEditEntrId    = null;
+let _pvDiasPrev      = new Set();
+let _pvDiasEntr      = new Set();
 
 // ══════════════════════════════════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════════════════════════════════
 
-function _pvUID() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-}
-
-function _pvFechaHoy() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function _pvFmtFecha(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y.slice(2)}`;
-}
-
-function _pvDiaHoy() {
-  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  return dias[new Date().getDay()];
-}
-
-function _pvIniciales(nombre) {
-  if (!nombre) return '?';
-  const parts = nombre.trim().split(' ');
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return nombre.slice(0, 2).toUpperCase();
-}
+const _pvUID  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const _pvHoy  = () => ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][new Date().getDay()];
+const _pvInit = n => {
+  const w = (n||'').trim().split(' ');
+  return w.length >= 2 ? (w[0][0]+w[1][0]).toUpperCase() : (n||'??').slice(0,2).toUpperCase();
+};
+const _pvNormId = dia => 'pvDPill_' + dia.replace(/[^a-zA-Z]/g,'');
 
 // ══════════════════════════════════════════════════════════════════════
-//  PERSISTENCIA localStorage
+//  PERSISTENCIA
 // ══════════════════════════════════════════════════════════════════════
 
 function _pvCargar() {
   try {
-    const rp = localStorage.getItem(_PV_KEY_PROV);
-    const rr = localStorage.getItem(_PV_KEY_RETIROS);
-    _pvProveedores = rp ? JSON.parse(rp) : [];
-    _pvRetiros     = rr ? JSON.parse(rr) : [];
-  } catch(e) {
-    _pvProveedores = [];
-    _pvRetiros = [];
-  }
+    _pvPreventas = JSON.parse(localStorage.getItem(_PV_LS_PREV)||'[]');
+    _pvEntregas  = JSON.parse(localStorage.getItem(_PV_LS_ENTR)||'[]');
+  } catch { _pvPreventas = []; _pvEntregas = []; }
 }
-
 function _pvGuardar() {
-  try {
-    localStorage.setItem(_PV_KEY_PROV,    JSON.stringify(_pvProveedores));
-    localStorage.setItem(_PV_KEY_RETIROS, JSON.stringify(_pvRetiros));
-  } catch(e) { console.warn('[PV] Error guardando:', e); }
+  localStorage.setItem(_PV_LS_PREV, JSON.stringify(_pvPreventas));
+  localStorage.setItem(_PV_LS_ENTR, JSON.stringify(_pvEntregas));
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  DÍAS SELECCIONADOS (checkboxes visuales)
+//  TOGGLE DÍAS — manejado con clase CSS sin re-render completo
 // ══════════════════════════════════════════════════════════════════════
 
-// Conjunto de días activos en el formulario (guardado globalmente para
-// que los botones puedan actualizar el estado sin rerenderizar todo).
-let _pvDiasSeleccionados = new Set();
-
-function _pvToggleDia(dia, editMode) {
-  if (_pvDiasSeleccionados.has(dia)) {
-    _pvDiasSeleccionados.delete(dia);
+function _pvTogglePrevDia(dia) {
+  const editing = !!_pvEditPrevId;
+  const clsOn   = editing ? 'edit-azul' : 'on-azul';
+  const el = document.getElementById(_pvNormId(dia) + '_prev');
+  if (!el) return;
+  if (_pvDiasPrev.has(dia)) {
+    _pvDiasPrev.delete(dia);
+    el.classList.remove('on-azul','edit-azul');
   } else {
-    _pvDiasSeleccionados.add(dia);
+    _pvDiasPrev.add(dia);
+    el.classList.remove('on-azul','edit-azul');
+    el.classList.add(clsOn);
   }
-  // Actualizar UI del botón
-  const btn = document.getElementById('pvDiaBtn_' + dia.replace('é','e').replace('é','e'));
-  if (btn) {
-    if (_pvDiasSeleccionados.has(dia)) {
-      btn.classList.add(editMode ? 'edit-activo' : 'activo');
-      btn.classList.remove(editMode ? 'activo' : 'edit-activo');
-    } else {
-      btn.classList.remove('activo', 'edit-activo');
-    }
+}
+function _pvToggleEntrDia(dia) {
+  const editing = !!_pvEditEntrId;
+  const clsOn   = editing ? 'edit-naranja' : 'on-naranja';
+  const el = document.getElementById(_pvNormId(dia) + '_entr');
+  if (!el) return;
+  if (_pvDiasEntr.has(dia)) {
+    _pvDiasEntr.delete(dia);
+    el.classList.remove('on-naranja','edit-naranja');
+  } else {
+    _pvDiasEntr.add(dia);
+    el.classList.remove('on-naranja','edit-naranja');
+    el.classList.add(clsOn);
   }
 }
 
-function _pvDiasBtnId(dia) {
-  // Normalizar tilde para usar como ID HTML
-  return 'pvDiaBtn_' + dia.replace(/[áéíóúÁÉÍÓÚ]/g, c =>
-    ({á:'a',é:'e',í:'i',ó:'o',ú:'u',Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U'}[c]||c));
+// ══════════════════════════════════════════════════════════════════════
+//  ACCIONES — PREVENTAS
+// ══════════════════════════════════════════════════════════════════════
+
+function _pvGuardarPrev() {
+  const inp = document.getElementById('pvPrevNombre');
+  const nombre = inp?.value?.trim();
+  if (!nombre) { if(typeof toast==='function') toast('Escribe el nombre del proveedor', true); inp?.focus(); return; }
+  const dias = [..._pvDiasPrev];
+  if (!dias.length) { if(typeof toast==='function') toast('Selecciona al menos un día', true); return; }
+  const dup = _pvPreventas.some(p => p.nombre.toLowerCase()===nombre.toLowerCase() && p.id!==_pvEditPrevId);
+  if (dup) { if(typeof toast==='function') toast('Ya existe un proveedor con ese nombre', true); return; }
+
+  if (_pvEditPrevId) {
+    const i = _pvPreventas.findIndex(p => p.id===_pvEditPrevId);
+    if (i !== -1) { _pvPreventas[i].nombre = nombre; _pvPreventas[i].dias = dias; }
+    _pvEditPrevId = null;
+    if(typeof toast==='function') toast('✓ Proveedor actualizado');
+  } else {
+    _pvPreventas.push({ id:_pvUID(), nombre, dias });
+    if(typeof toast==='function') toast(`✓ "${nombre}" registrado en Preventas`);
+  }
+  _pvDiasPrev = new Set();
+  _pvGuardar();
+  _pvRefreshPrev();
 }
 
-function _pvRenderDiasBtns(seleccionados, editMode) {
+function _pvEditarPrev(id) {
+  const p = _pvPreventas.find(x => x.id===id);
+  if (!p) return;
+  _pvEditPrevId = id;
+  _pvDiasPrev = new Set(p.dias);
+  document.getElementById('pvFormPrevPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  _pvRefreshPrev();
+  setTimeout(() => { const el = document.getElementById('pvPrevNombre'); if(el){el.focus();el.select();} }, 80);
+}
+
+function _pvCancelarPrev() {
+  _pvEditPrevId = null;
+  _pvDiasPrev = new Set();
+  _pvRefreshPrev();
+}
+
+function _pvBorrarPrev(id) {
+  const p = _pvPreventas.find(x => x.id===id);
+  if (!p || !confirm(`¿Eliminar "${p.nombre}" de Preventas?`)) return;
+  _pvPreventas = _pvPreventas.filter(x => x.id!==id);
+  if (_pvEditPrevId===id) { _pvEditPrevId=null; _pvDiasPrev=new Set(); }
+  _pvGuardar();
+  _pvRefreshPrev();
+  if(typeof toast==='function') toast('🗑 Proveedor eliminado de Preventas');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  ACCIONES — ENTREGAS
+// ══════════════════════════════════════════════════════════════════════
+
+function _pvGuardarEntr() {
+  const inp = document.getElementById('pvEntrNombre');
+  const nombre = inp?.value?.trim();
+  if (!nombre) { if(typeof toast==='function') toast('Escribe el nombre del proveedor', true); inp?.focus(); return; }
+  const dias = [..._pvDiasEntr];
+  if (!dias.length) { if(typeof toast==='function') toast('Selecciona al menos un día', true); return; }
+  const dup = _pvEntregas.some(p => p.nombre.toLowerCase()===nombre.toLowerCase() && p.id!==_pvEditEntrId);
+  if (dup) { if(typeof toast==='function') toast('Ya existe un proveedor con ese nombre', true); return; }
+
+  if (_pvEditEntrId) {
+    const i = _pvEntregas.findIndex(p => p.id===_pvEditEntrId);
+    if (i !== -1) { _pvEntregas[i].nombre = nombre; _pvEntregas[i].dias = dias; }
+    _pvEditEntrId = null;
+    if(typeof toast==='function') toast('✓ Proveedor actualizado');
+  } else {
+    _pvEntregas.push({ id:_pvUID(), nombre, dias });
+    if(typeof toast==='function') toast(`✓ "${nombre}" registrado en Entregas`);
+  }
+  _pvDiasEntr = new Set();
+  _pvGuardar();
+  _pvRefreshEntr();
+}
+
+function _pvEditarEntr(id) {
+  const p = _pvEntregas.find(x => x.id===id);
+  if (!p) return;
+  _pvEditEntrId = id;
+  _pvDiasEntr = new Set(p.dias);
+  document.getElementById('pvFormEntrPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  _pvRefreshEntr();
+  setTimeout(() => { const el = document.getElementById('pvEntrNombre'); if(el){el.focus();el.select();} }, 80);
+}
+
+function _pvCancelarEntr() {
+  _pvEditEntrId = null;
+  _pvDiasEntr = new Set();
+  _pvRefreshEntr();
+}
+
+function _pvBorrarEntr(id) {
+  const p = _pvEntregas.find(x => x.id===id);
+  if (!p || !confirm(`¿Eliminar "${p.nombre}" de Entregas?`)) return;
+  _pvEntregas = _pvEntregas.filter(x => x.id!==id);
+  if (_pvEditEntrId===id) { _pvEditEntrId=null; _pvDiasEntr=new Set(); }
+  _pvGuardar();
+  _pvRefreshEntr();
+  if(typeof toast==='function') toast('🗑 Proveedor eliminado de Entregas');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  BUILDERS DE HTML REUTILIZABLES
+// ══════════════════════════════════════════════════════════════════════
+
+function _pvBuildDiasPills(set, tipo) {
+  // tipo: 'prev' | 'entr'
+  const editing = tipo==='prev' ? !!_pvEditPrevId : !!_pvEditEntrId;
+  const clsOn   = editing ? `edit-${tipo==='prev'?'azul':'naranja'}` : `on-${tipo==='prev'?'azul':'naranja'}`;
   return _PV_DIAS.map(dia => {
-    const activo = seleccionados.includes(dia);
-    const claseActivo = editMode ? 'edit-activo' : 'activo';
+    const active = set.has(dia);
     return `<button
       type="button"
-      id="${_pvDiasBtnId(dia)}"
-      class="pv-dia-btn ${activo ? claseActivo : ''}"
-      onclick="_pvToggleDia('${dia}', ${editMode})">
-        ${_PV_DIA_ABREV[dia] || dia}
+      id="${_pvNormId(dia)}_${tipo}"
+      class="pv-dia-pill ${active ? clsOn : ''}"
+      onclick="_pvToggle${tipo==='prev'?'Prev':'Entr'}Dia('${dia}')">
+      ${_PV_ABREV[dia]}
     </button>`;
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════════════════════
-//  ACCIONES — PROVEEDORES
-// ══════════════════════════════════════════════════════════════════════
+function _pvBuildForm(tipo) {
+  const isPrev  = tipo === 'prev';
+  const color   = isPrev ? 'azul' : 'naranja';
+  const editId  = isPrev ? _pvEditPrevId  : _pvEditEntrId;
+  const diasSet = isPrev ? _pvDiasPrev    : _pvDiasEntr;
+  const lista   = isPrev ? _pvPreventas   : _pvEntregas;
+  const editing = !!editId;
+  const prov    = editing ? lista.find(p=>p.id===editId) : null;
+  const inpId   = isPrev ? 'pvPrevNombre' : 'pvEntrNombre';
+  const fnSave  = isPrev ? '_pvGuardarPrev' : '_pvGuardarEntr';
+  const fnCancel= isPrev ? '_pvCancelarPrev' : '_pvCancelarEntr';
+  const btnClass= editing ? `btn-pv-edit-${color}` : `btn-pv-${color}`;
+  const btnTxt  = editing ? '✅ Guardar cambios' : '➕ Registrar Proveedor';
 
-function _pvAgregarProveedor() {
-  const nombreEl = document.getElementById('pvNombreInp');
-  const nombre = nombreEl?.value?.trim();
+  return `
+    ${editing ? `
+      <div class="pv-edit-banner ${color}">
+        ✏️ Editando: <strong style="margin-left:4px;">${prov?.nombre}</strong>
+      </div>` : ''}
 
-  if (!nombre) {
-    if (typeof toast === 'function') toast('Escribe el nombre del proveedor', true);
-    nombreEl?.focus();
-    return;
-  }
+    <div class="pv-form-grid">
+      <div class="pv-field">
+        <label>Nombre del Proveedor</label>
+        <input
+          class="pv-inp ${editing ? 'edit-'+color : ''}"
+          type="text"
+          id="${inpId}"
+          placeholder="Ej: Distribuidora García"
+          value="${prov?.nombre||''}"
+          maxlength="60"
+          onkeydown="if(event.key==='Enter')${fnSave}()">
+      </div>
+      <div class="pv-dias-wrap">
+        <span class="pv-dias-label">Días</span>
+        <div class="pv-dias-row">
+          ${_pvBuildDiasPills(diasSet, tipo)}
+        </div>
+      </div>
+    </div>
 
-  const dias = [..._pvDiasSeleccionados];
-  if (dias.length === 0) {
-    if (typeof toast === 'function') toast('Selecciona al menos un día de pago', true);
-    return;
-  }
-
-  // Verificar nombre duplicado
-  const existe = _pvProveedores.some(p =>
-    p.nombre.toLowerCase() === nombre.toLowerCase() && p.id !== _pvEditandoId
-  );
-  if (existe) {
-    if (typeof toast === 'function') toast('Ya existe un proveedor con ese nombre', true);
-    return;
-  }
-
-  if (_pvEditandoId) {
-    // Modo edición
-    const idx = _pvProveedores.findIndex(p => p.id === _pvEditandoId);
-    if (idx !== -1) {
-      _pvProveedores[idx].nombre = nombre;
-      _pvProveedores[idx].dias   = dias;
-      // Actualizar nombre en retiros existentes
-      _pvRetiros.forEach(r => {
-        if (r.proveedorId === _pvEditandoId) r.proveedorNombre = nombre;
-      });
-    }
-    _pvEditandoId = null;
-    if (typeof toast === 'function') toast('✓ Proveedor actualizado');
-  } else {
-    // Nuevo proveedor
-    _pvProveedores.push({ id: _pvUID(), nombre, dias });
-    if (typeof toast === 'function') toast(`✓ Proveedor "${nombre}" registrado`);
-  }
-
-  _pvGuardar();
-  _pvDiasSeleccionados = new Set();
-  _pvRenderTodo();
+    <button class="btn-pv ${btnClass}" onclick="${fnSave}()">${btnTxt}</button>
+    ${editing ? `<button class="btn-pv-ghost" onclick="${fnCancel}()">✕ Cancelar edición</button>` : ''}
+  `;
 }
 
-function _pvCancelarEdicion() {
-  _pvEditandoId = null;
-  _pvDiasSeleccionados = new Set();
-  _pvRenderTodo();
-}
+function _pvBuildTabla(lista, tipo) {
+  const isPrev = tipo === 'prev';
+  const color  = isPrev ? 'azul' : 'naranja';
+  const fnEdit = isPrev ? '_pvEditarPrev' : '_pvEditarEntr';
+  const fnDel  = isPrev ? '_pvBorrarPrev' : '_pvBorrarEntr';
+  const editId = isPrev ? _pvEditPrevId   : _pvEditEntrId;
 
-function _pvIniciarEdicion(id) {
-  const prov = _pvProveedores.find(p => p.id === id);
-  if (!prov) return;
+  if (!lista.length) return `
+    <div class="pv-empty">
+      <div class="pv-empty-icon">${isPrev ? '📋' : '🚚'}</div>
+      Sin proveedores registrados aún
+    </div>`;
 
-  _pvEditandoId = id;
-  _pvDiasSeleccionados = new Set(prov.dias);
-
-  // Scroll al formulario
-  const panel = document.getElementById('pvFormPanel');
-  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  _pvRenderTodo();
-
-  // Poner foco en el input
-  setTimeout(() => {
-    const inp = document.getElementById('pvNombreInp');
-    if (inp) { inp.focus(); inp.select(); }
-  }, 100);
-}
-
-function _pvEliminarProveedor(id) {
-  const prov = _pvProveedores.find(p => p.id === id);
-  if (!prov) return;
-
-  const tieneRetiros = _pvRetiros.some(r => r.proveedorId === id);
-  const msg = tieneRetiros
-    ? `¿Eliminar "${prov.nombre}"? Se borrarán también sus ${_pvRetiros.filter(r => r.proveedorId===id).length} retiro(s).`
-    : `¿Eliminar al proveedor "${prov.nombre}"?`;
-
-  if (!confirm(msg)) return;
-
-  _pvProveedores = _pvProveedores.filter(p => p.id !== id);
-  _pvRetiros     = _pvRetiros.filter(r => r.proveedorId !== id);
-
-  if (_pvEditandoId === id) {
-    _pvEditandoId = null;
-    _pvDiasSeleccionados = new Set();
-  }
-
-  _pvGuardar();
-  _pvRenderTodo();
-  if (typeof toast === 'function') toast(`🗑 Proveedor eliminado`);
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  ACCIONES — RETIROS
-// ══════════════════════════════════════════════════════════════════════
-
-function _pvRegistrarRetiro() {
-  const provEl   = document.getElementById('pvRetiroProveedor');
-  const montoEl  = document.getElementById('pvRetiroMonto');
-  const notaEl   = document.getElementById('pvRetiroNota');
-  const fechaEl  = document.getElementById('pvRetiroFecha');
-
-  const provId   = provEl?.value;
-  const monto    = parseFloat(montoEl?.value || '0');
-  const nota     = notaEl?.value?.trim() || '';
-  const fecha    = fechaEl?.value || _pvFechaHoy();
-
-  if (!provId) {
-    if (typeof toast === 'function') toast('Selecciona un proveedor', true);
-    provEl?.focus();
-    return;
-  }
-  if (!monto || monto <= 0) {
-    if (typeof toast === 'function') toast('Ingresa un monto válido', true);
-    montoEl?.focus();
-    return;
-  }
-
-  const prov = _pvProveedores.find(p => p.id === provId);
-  const retiro = {
-    id: _pvUID(),
-    proveedorId:     provId,
-    proveedorNombre: prov?.nombre || '—',
-    fecha,
-    monto,
-    nota,
-  };
-
-  _pvRetiros.unshift(retiro); // más reciente primero
-  _pvGuardar();
-
-  // Limpiar formulario de retiro
-  if (provEl)  provEl.value  = '';
-  if (montoEl) montoEl.value = '';
-  if (notaEl)  notaEl.value  = '';
-  if (fechaEl) fechaEl.value = _pvFechaHoy();
-
-  _pvRenderRetiros();
-  _pvRenderStats();
-  if (typeof toast === 'function') toast(`✓ Retiro de $${monto.toFixed(2)} registrado`);
-}
-
-function _pvEliminarRetiro(id) {
-  _pvRetiros = _pvRetiros.filter(r => r.id !== id);
-  _pvGuardar();
-  _pvRenderRetiros();
-  _pvRenderStats();
-  if (typeof toast === 'function') toast('🗑 Retiro eliminado');
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  RENDER PARCIAL (sin reescribir todo el DOM)
-// ══════════════════════════════════════════════════════════════════════
-
-function _pvRenderStats() {
-  const totalRetiros = _pvRetiros.reduce((s, r) => s + Number(r.monto || 0), 0);
-  const el1 = document.getElementById('pvStatProveedores');
-  const el2 = document.getElementById('pvStatRetiros');
-  const el3 = document.getElementById('pvStatTotal');
-  if (el1) el1.textContent = _pvProveedores.length;
-  if (el2) el2.textContent = _pvRetiros.length;
-  if (el3) el3.textContent = '$' + totalRetiros.toFixed(2);
-}
-
-function _pvRenderTabla() {
-  const wrap = document.getElementById('pvTablaWrap');
-  if (!wrap) return;
-
-  if (_pvProveedores.length === 0) {
-    wrap.innerHTML = `<div class="pv-table-empty">📭 Sin proveedores registrados aún</div>`;
-    return;
-  }
-
-  wrap.innerHTML = `
-    <div class="pv-table-wrap">
-      <table class="pv-table">
-        <thead>
-          <tr>
-            <th>Proveedor</th>
-            <th>Días de Pago</th>
-            <th>Retiros</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
+  return `
+    <div class="pv-table-scroll">
+      <table class="pv-tbl">
+        <thead><tr>
+          <th>Proveedor</th>
+          <th>Días Programados</th>
+          <th>Acciones</th>
+        </tr></thead>
         <tbody>
-          ${_pvProveedores.map(p => {
-            const retirosProv = _pvRetiros.filter(r => r.proveedorId === p.id);
-            const totalProv   = retirosProv.reduce((s, r) => s + Number(r.monto || 0), 0);
-            const esEditando  = _pvEditandoId === p.id;
-            return `
-              <tr style="${esEditando ? 'background:#fffbeb;' : ''}">
-                <td>
-                  <div class="pv-nombre-cell">
-                    <div class="pv-avatar" style="${esEditando ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : ''}">${_pvIniciales(p.nombre)}</div>
-                    <div>
-                      <div class="pv-nombre-text">${p.nombre}</div>
-                      ${esEditando ? '<div style="font-size:10px;color:#92400e;font-weight:900;font-family:Nunito,sans-serif;">✏️ Editando…</div>' : ''}
-                    </div>
+          ${lista.map(p => {
+            const isEditing = p.id === editId;
+            return `<tr class="${isEditing?'editing':''}">
+              <td>
+                <div class="pv-cell-nombre">
+                  <div class="pv-avatar ${color}">${_pvInit(p.nombre)}</div>
+                  <div>
+                    <div class="pv-nombre-main">${p.nombre}</div>
+                    ${isEditing ? `<div class="pv-nombre-editing-tag ${color}">✏ Editando…</div>` : ''}
                   </div>
-                </td>
-                <td>
-                  <div class="pv-dias-chips">
-                    ${p.dias.length > 0
-                      ? p.dias.map(d => `<span class="pv-dia-chip">${_PV_DIA_ABREV[d] || d}</span>`).join('')
-                      : '<span style="color:var(--text-muted);font-size:12px;">—</span>'
-                    }
-                  </div>
-                </td>
-                <td>
-                  <div style="font-size:13px;font-weight:900;font-family:Nunito,sans-serif;">
-                    ${retirosProv.length > 0
-                      ? `<span style="color:#dc2626;">$${totalProv.toFixed(2)}</span>
-                         <div style="font-size:11px;font-weight:700;color:var(--text-muted);">${retirosProv.length} retiro${retirosProv.length !== 1 ? 's' : ''}</div>`
-                      : '<span style="color:var(--text-muted);font-size:12px;">Sin retiros</span>'
-                    }
-                  </div>
-                </td>
-                <td>
-                  <button class="btn-pv-edit" onclick="_pvIniciarEdicion('${p.id}')">✏️ Editar</button>
-                  <button class="btn-pv-del"  onclick="_pvEliminarProveedor('${p.id}')">🗑 Borrar</button>
-                </td>
-              </tr>`;
+                </div>
+              </td>
+              <td>
+                <div class="pv-chips-row">
+                  ${p.dias.map(d => `<span class="pv-chip ${color}">${_PV_ABREV[d]||d}</span>`).join('')}
+                </div>
+              </td>
+              <td>
+                <button class="btn-tbl btn-tbl-edit-${color}" onclick="${fnEdit}('${p.id}')">✏ Editar</button>
+                <button class="btn-tbl btn-tbl-del"            onclick="${fnDel}('${p.id}')">🗑</button>
+              </td>
+            </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>`;
-
-  // Actualizar badge de conteo
-  const badge = document.getElementById('pvTablaCountBadge');
-  if (badge) badge.textContent = _pvProveedores.length;
 }
 
-function _pvRenderRetiros() {
-  const list  = document.getElementById('pvRetirosList');
-  const total = document.getElementById('pvRetirosTotal');
-  const badge = document.getElementById('pvRetirosCountBadge');
+// ══════════════════════════════════════════════════════════════════════
+//  REFRESH PARCIALES
+// ══════════════════════════════════════════════════════════════════════
 
-  if (!list) return;
-
-  const totalMonto = _pvRetiros.reduce((s, r) => s + Number(r.monto || 0), 0);
-  if (total) total.textContent = '$' + totalMonto.toFixed(2);
-  if (badge) badge.textContent = _pvRetiros.length;
-
-  if (_pvRetiros.length === 0) {
-    list.innerHTML = `<div class="pv-table-empty">📭 Sin retiros registrados</div>`;
-    return;
-  }
-
-  list.innerHTML = _pvRetiros.map(r => `
-    <div class="pv-retiro-item">
-      <div style="font-size:18px;">💸</div>
-      <div class="pv-retiro-proveedor">${r.proveedorNombre}</div>
-      <div class="pv-retiro-nota">${r.nota || '—'}</div>
-      <div class="pv-retiro-fecha">${_pvFmtFecha(r.fecha)}</div>
-      <div class="pv-retiro-monto">−$${Number(r.monto).toFixed(2)}</div>
-      <button class="btn-pv-retiro-del" onclick="_pvEliminarRetiro('${r.id}')" title="Eliminar">✕</button>
-    </div>`).join('');
+function _pvRefreshPrev() {
+  const fWrap = document.getElementById('pvFormPrevWrap');
+  const tWrap = document.getElementById('pvTablaPrevWrap');
+  const badge = document.getElementById('pvPrevBadge');
+  if (fWrap) fWrap.innerHTML = _pvBuildForm('prev');
+  if (tWrap) tWrap.innerHTML = _pvBuildTabla(_pvPreventas, 'prev');
+  if (badge) badge.textContent = _pvPreventas.length;
+  _pvRefreshStats();
+  _pvRefreshHoy();
+}
+function _pvRefreshEntr() {
+  const fWrap = document.getElementById('pvFormEntrWrap');
+  const tWrap = document.getElementById('pvTablaEntrWrap');
+  const badge = document.getElementById('pvEntrBadge');
+  if (fWrap) fWrap.innerHTML = _pvBuildForm('entr');
+  if (tWrap) tWrap.innerHTML = _pvBuildTabla(_pvEntregas, 'entr');
+  if (badge) badge.textContent = _pvEntregas.length;
+  _pvRefreshStats();
+  _pvRefreshHoy();
 }
 
-function _pvRenderFormulario() {
-  const wrap = document.getElementById('pvFormWrap');
-  if (!wrap) return;
-
-  const editando = !!_pvEditandoId;
-  const prov = editando ? _pvProveedores.find(p => p.id === _pvEditandoId) : null;
-  const diasActivos = editando ? (prov?.dias || []) : [];
-
-  // Sincronizar el set global
-  if (editando) {
-    _pvDiasSeleccionados = new Set(diasActivos);
-  }
-
-  wrap.innerHTML = `
-    ${editando ? `
-      <div class="pv-edit-banner">
-        ✏️ Editando proveedor: <strong>${prov?.nombre}</strong>
-      </div>` : ''}
-
-    <div class="pv-field" style="margin-bottom:12px;">
-      <label>${editando ? 'Nuevo nombre' : 'Nombre del Proveedor'}</label>
-      <input
-        class="pv-inp ${editando ? 'edit-mode' : ''}"
-        type="text"
-        id="pvNombreInp"
-        placeholder="Ej: Distribuidora García"
-        value="${prov?.nombre || ''}"
-        maxlength="60"
-        onkeydown="if(event.key==='Enter')_pvAgregarProveedor()">
-    </div>
-
-    <div style="margin-bottom:14px;">
-      <span class="pv-dias-label">Días de Pago</span>
-      <div class="pv-dias-grid">
-        ${_pvRenderDiasBtns(diasActivos, editando)}
-      </div>
-    </div>
-
-    <div style="display:grid;gap:8px;">
-      <button class="btn-pv-primary ${editando ? 'edit-mode' : ''}" onclick="_pvAgregarProveedor()">
-        ${editando ? '✅ Guardar cambios' : '➕ Registrar Proveedor'}
-      </button>
-      ${editando ? `<button class="btn-pv-ghost" onclick="_pvCancelarEdicion()">✕ Cancelar edición</button>` : ''}
-    </div>`;
+function _pvRefreshStats() {
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+  let maxPrev=0, maxEntr=0;
+  dias.forEach(d => {
+    const cp = _pvPreventas.filter(p=>p.dias.includes(d)).length;
+    const ce = _pvEntregas.filter(p=>p.dias.includes(d)).length;
+    if(cp>maxPrev) maxPrev=cp;
+    if(ce>maxEntr) maxEntr=ce;
+  });
+  const s1 = document.getElementById('pvStat1');
+  const s2 = document.getElementById('pvStat2');
+  const s3 = document.getElementById('pvStat3');
+  const s4 = document.getElementById('pvStat4');
+  if(s1) s1.textContent = _pvPreventas.length;
+  if(s2) s2.textContent = _pvEntregas.length;
+  if(s3) s3.textContent = maxPrev;
+  if(s4) s4.textContent = maxEntr;
 }
 
-function _pvRenderHoyAlert() {
+function _pvRefreshHoy() {
   const wrap = document.getElementById('pvHoyWrap');
   if (!wrap) return;
-  const diaHoy = _pvDiaHoy();
-  const hoy = _pvProveedores.filter(p => p.dias.includes(diaHoy));
-  if (diaHoy === 'Sábado' || diaHoy === 'Domingo') {
-    wrap.innerHTML = `
-      <div class="pv-hoy-row">
-        <div class="pv-hoy-icon">🌿</div>
-        <div class="pv-hoy-text">
-          <div class="pv-hoy-title">Hoy es ${diaHoy}</div>
-          <div class="pv-hoy-empty">No hay proveedores programados para el fin de semana.</div>
-        </div>
-      </div>`;
-    return;
-  }
-  wrap.innerHTML = `
-    <div class="pv-hoy-row">
-      <div class="pv-hoy-icon">${hoy.length > 0 ? '📦' : '✅'}</div>
-      <div class="pv-hoy-text">
-        <div class="pv-hoy-title">Proveedores de hoy — ${diaHoy}</div>
-        ${hoy.length > 0
-          ? `<div class="pv-hoy-provs">${hoy.map(p => '• ' + p.nombre).join('  ')}</div>`
-          : `<div class="pv-hoy-empty">Sin proveedores programados para hoy.</div>`
-        }
-      </div>
-    </div>`;
-}
+  const diaHoy = _pvHoy();
+  const esFinde = diaHoy==='Sábado'||diaHoy==='Domingo';
+  const prevHoy = esFinde ? [] : _pvPreventas.filter(p=>p.dias.includes(diaHoy));
+  const entrHoy = esFinde ? [] : _pvEntregas.filter(p=>p.dias.includes(diaHoy));
+  const sinNada  = !prevHoy.length && !entrHoy.length;
+  const clr = (!esFinde && (prevHoy.length||entrHoy.length)) ? 'verde' : 'gris';
 
-// Rerenderiza todo (formulario + tabla + retiros + stats + hoy)
-function _pvRenderTodo() {
-  _pvRenderFormulario();
-  _pvRenderTabla();
-  _pvRenderRetiros();
-  _pvRenderStats();
-  _pvRenderHoyAlert();
-  // Actualizar select de proveedores en retiro
-  const sel = document.getElementById('pvRetiroProveedor');
-  if (sel) {
-    const valorActual = sel.value;
-    sel.innerHTML = `<option value="">— Seleccionar proveedor —</option>` +
-      _pvProveedores.map(p => `<option value="${p.id}" ${p.id === valorActual ? 'selected' : ''}>${p.nombre}</option>`).join('');
-  }
+  wrap.innerHTML = `
+    <div class="pv-hoy-card ${clr}">
+      <div class="pv-hoy-header">
+        <div class="pv-hoy-icon-wrap ${clr}">${esFinde?'🌿':sinNada?'✅':'📦'}</div>
+        <div>
+          <div class="pv-hoy-title ${clr}">Hoy es ${diaHoy}</div>
+          <div class="pv-hoy-sub">${
+            esFinde ? 'Fin de semana — sin actividad de proveedores'
+            : sinNada ? 'Sin preventas ni entregas programadas para hoy'
+            : 'Proveedores programados para hoy'
+          }</div>
+        </div>
+      </div>
+      ${(!esFinde && (prevHoy.length||entrHoy.length)) ? `
+      <div class="pv-hoy-chips">
+        ${prevHoy.map(p=>`<span class="pv-hoy-chip prev">🛒 ${p.nombre}</span>`).join('')}
+        ${entrHoy.map(p=>`<span class="pv-hoy-chip entr">🚚 ${p.nombre}</span>`).join('')}
+      </div>` : ''}
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1037,10 +913,17 @@ function renderFinanzasMes(pgId) {
   if (!pg) return;
 
   _pvCargar();
-  _pvEditandoId = null;
-  _pvDiasSeleccionados = new Set();
+  _pvEditPrevId = null;
+  _pvEditEntrId = null;
+  _pvDiasPrev   = new Set();
+  _pvDiasEntr   = new Set();
 
-  const totalRetiros = _pvRetiros.reduce((s, r) => s + Number(r.monto || 0), 0);
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+  let maxPrev=0, maxEntr=0;
+  dias.forEach(d => {
+    maxPrev = Math.max(maxPrev, _pvPreventas.filter(p=>p.dias.includes(d)).length);
+    maxEntr = Math.max(maxEntr, _pvEntregas.filter(p=>p.dias.includes(d)).length);
+  });
 
   pg.innerHTML = `
 
@@ -1048,113 +931,107 @@ function renderFinanzasMes(pgId) {
     <div class="pv-hero">
       <div class="pv-hero-top">
         <div>
-          <div class="pv-hero-title">🏭 Gestión de Proveedores</div>
-          <div class="pv-hero-sub">Registro · Días de pago · Retiros</div>
+          <div class="pv-hero-eyebrow">Control de proveedores</div>
+          <div class="pv-hero-title">📦 Agenda de Proveedores</div>
+          <div class="pv-hero-sub">Preventas y entregas por día de la semana</div>
         </div>
       </div>
-
       <div class="pv-stats-row">
         <div class="pv-stat-card">
-          <div class="pv-stat-label">🏭 Proveedores</div>
-          <div class="pv-stat-val verde" id="pvStatProveedores">${_pvProveedores.length}</div>
-          <div class="pv-stat-sub">Registrados</div>
+          <div class="pv-stat-label">🛒 Preventas</div>
+          <div class="pv-stat-val azul" id="pvStat1">${_pvPreventas.length}</div>
+          <div class="pv-stat-sub">Proveedores</div>
         </div>
         <div class="pv-stat-card">
-          <div class="pv-stat-label">💸 Retiros</div>
-          <div class="pv-stat-val amarillo" id="pvStatRetiros">${_pvRetiros.length}</div>
-          <div class="pv-stat-sub">Totales</div>
+          <div class="pv-stat-label">🚚 Entregas</div>
+          <div class="pv-stat-val naranja" id="pvStat2">${_pvEntregas.length}</div>
+          <div class="pv-stat-sub">Proveedores</div>
         </div>
         <div class="pv-stat-card">
-          <div class="pv-stat-label">💰 Total retirado</div>
-          <div class="pv-stat-val" style="color:#fca5a5;" id="pvStatTotal">$${totalRetiros.toFixed(2)}</div>
-          <div class="pv-stat-sub">Acumulado</div>
+          <div class="pv-stat-label">📅 Max/día prev.</div>
+          <div class="pv-stat-val verde" id="pvStat3">${maxPrev}</div>
+          <div class="pv-stat-sub">Preventas</div>
+        </div>
+        <div class="pv-stat-card">
+          <div class="pv-stat-label">📅 Max/día entr.</div>
+          <div class="pv-stat-val blanco" id="pvStat4">${maxEntr}</div>
+          <div class="pv-stat-sub">Entregas</div>
         </div>
       </div>
     </div>
 
-    <!-- ══ CUERPO ══════════════════════════════════════════════════════ -->
     <div class="pv-body">
 
-      <!-- ── Alerta de proveedores de HOY ── -->
+      <!-- ── Alerta de hoy ── -->
       <div id="pvHoyWrap"></div>
 
-      <!-- ── REGISTRO / EDICIÓN DE PROVEEDOR ── -->
-      <div class="pv-panel" id="pvFormPanel">
+      <!-- ════════════════════════════════════════════════
+           SECCIÓN 1 — PREVENTAS (azul)
+      ═════════════════════════════════════════════════ -->
+
+      <!-- Formulario preventas -->
+      <div class="pv-panel" id="pvFormPrevPanel">
         <div class="pv-panel-header">
-          <div class="pv-panel-icon" style="background:#dcfce7;">🏭</div>
-          <div class="pv-panel-title">Registrar Proveedor</div>
+          <div class="pv-panel-icon-wrap azul">🛒</div>
+          <div class="pv-panel-titles">
+            <div class="pv-panel-title">Preventas</div>
+            <div class="pv-panel-desc">Días en que el proveedor pasa a tomar pedido</div>
+          </div>
         </div>
         <div class="pv-panel-body">
-          <div id="pvFormWrap"></div>
+          <div id="pvFormPrevWrap"></div>
         </div>
       </div>
 
-      <!-- ── TABLA DE PROVEEDORES ── -->
+      <!-- Tabla preventas -->
       <div class="pv-panel">
         <div class="pv-panel-header">
-          <div class="pv-panel-icon" style="background:#dbeafe;">📋</div>
-          <div class="pv-panel-title">Proveedores Registrados</div>
-          <span class="pv-panel-badge" id="pvTablaCountBadge">${_pvProveedores.length}</span>
+          <div class="pv-panel-icon-wrap azul">📋</div>
+          <div class="pv-panel-titles">
+            <div class="pv-panel-title">Proveedores — Preventas</div>
+          </div>
+          <span class="pv-count-badge azul" id="pvPrevBadge">${_pvPreventas.length}</span>
         </div>
-        <div id="pvTablaWrap"></div>
+        <div id="pvTablaPrevWrap"></div>
       </div>
 
-      <!-- ── RETIROS ── -->
-      <div class="pv-panel">
+      <!-- ════════════════════════════════════════════════
+           SECCIÓN 2 — ENTREGAS (naranja)
+      ═════════════════════════════════════════════════ -->
+
+      <!-- Formulario entregas -->
+      <div class="pv-panel" id="pvFormEntrPanel">
         <div class="pv-panel-header">
-          <div class="pv-panel-icon" style="background:#fee2e2;">💸</div>
-          <div class="pv-panel-title">Retiros</div>
-          <span class="pv-panel-badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;" id="pvRetirosCountBadge">${_pvRetiros.length}</span>
+          <div class="pv-panel-icon-wrap naranja">🚚</div>
+          <div class="pv-panel-titles">
+            <div class="pv-panel-title">Entregas</div>
+            <div class="pv-panel-desc">Días en que el proveedor trae el producto</div>
+          </div>
         </div>
         <div class="pv-panel-body">
-
-          <div class="pv-sep">Nuevo retiro</div>
-          <div class="pv-retiro-form">
-            <div class="pv-retiro-row">
-              <div class="pv-field">
-                <label>Proveedor</label>
-                <select class="pv-inp pv-inp-select" id="pvRetiroProveedor">
-                  <option value="">— Seleccionar proveedor —</option>
-                  ${_pvProveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
-                </select>
-              </div>
-              <div class="pv-field">
-                <label>Monto ($)</label>
-                <input class="pv-inp" type="number" id="pvRetiroMonto" min="0.01" step="0.01" placeholder="0.00">
-              </div>
-            </div>
-            <div class="pv-retiro-row">
-              <div class="pv-field">
-                <label>Fecha</label>
-                <input class="pv-inp" type="date" id="pvRetiroFecha" value="${_pvFechaHoy()}">
-              </div>
-              <div class="pv-field">
-                <label>Nota (opcional)</label>
-                <input class="pv-inp" type="text" id="pvRetiroNota" placeholder="Ej: pago semanal…" maxlength="80">
-              </div>
-            </div>
-            <button class="btn-pv-primary" onclick="_pvRegistrarRetiro()">
-              💸 Registrar Retiro
-            </button>
-          </div>
-
-          <div style="margin-top:16px;">
-            <div class="pv-sep">Historial de retiros</div>
-            <div class="pv-retiro-list" id="pvRetirosList"></div>
-            <div class="pv-retiro-total">
-              <span>Total acumulado en retiros</span>
-              <span id="pvRetirosTotal">$${totalRetiros.toFixed(2)}</span>
-            </div>
-          </div>
+          <div id="pvFormEntrWrap"></div>
         </div>
+      </div>
+
+      <!-- Tabla entregas -->
+      <div class="pv-panel">
+        <div class="pv-panel-header">
+          <div class="pv-panel-icon-wrap naranja">📋</div>
+          <div class="pv-panel-titles">
+            <div class="pv-panel-title">Proveedores — Entregas</div>
+          </div>
+          <span class="pv-count-badge naranja" id="pvEntrBadge">${_pvEntregas.length}</span>
+        </div>
+        <div id="pvTablaEntrWrap"></div>
       </div>
 
     </div>
   `;
 
-  // Render de partes dinámicas
-  _pvRenderFormulario();
-  _pvRenderTabla();
-  _pvRenderRetiros();
-  _pvRenderHoyAlert();
+  // Render dinámico
+  document.getElementById('pvFormPrevWrap').innerHTML = _pvBuildForm('prev');
+  document.getElementById('pvTablaPrevWrap').innerHTML = _pvBuildTabla(_pvPreventas, 'prev');
+  document.getElementById('pvFormEntrWrap').innerHTML  = _pvBuildForm('entr');
+  document.getElementById('pvTablaEntrWrap').innerHTML = _pvBuildTabla(_pvEntregas, 'entr');
+  _pvRefreshHoy();
 }
