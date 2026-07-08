@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#16a34a">
+<title>Despensa Económica — Calculadora de Precios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg: #f0fdf4;
+    --surface: #ffffff;
+    --border: #bbf7d0;
+    --border-mid: #86efac;
+    --green: #16a34a;
+    --green-dark: #15803d;
+    --green-900: #052e16;
+    --green-light: #dcfce7;
+    --green-mid: #bbf7d0;
+    --red: #dc2626;
+    --red-light: rgba(220,38,38,0.1);
+    --text: #052e16;
+    --text-muted: #4b7a5a;
+    --shadow: 0 1px 4px rgba(22,163,74,0.08), 0 4px 16px rgba(22,163,74,0.06);
+    --shadow-lg: 0 8px 32px rgba(22,163,74,0.18);
+    --r: 14px;
+    --r-sm: 9px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    background-image:radial-gradient(ellipse 90% 40% at 50% -10%, rgba(22,163,74,.07) 0%, transparent 70%);
+    background-attachment:fixed;
+    font-family:'Nunito',sans-serif; font-weight:700; color:var(--text);
+    min-height:100vh; padding:16px; padding-bottom:60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:520px;margin:0 auto;}
+
+  /* Hero */
+  .hero{
+    background:linear-gradient(135deg, var(--green-900) 0%, #14532d 45%, var(--green-dark) 100%);
+    border-radius:var(--r); padding:26px 22px; color:#fff; margin-bottom:18px;
+    box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+  }
+  .hero::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse 70% 80% at 85% 0%, rgba(74,222,128,.14), transparent 55%);
+    pointer-events:none;
+  }
+  .hero h1{font-size:21px;font-weight:900;position:relative;letter-spacing:-.2px;}
+  .hero p{font-size:12.5px;color:rgba(255,255,255,.75);margin-top:4px;font-weight:700;position:relative;}
+
+  /* Cards */
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; margin-bottom:16px;
+  }
+  .card-header{
+    padding:14px 18px; border-bottom:1px solid var(--green-light);
+    background:linear-gradient(135deg, var(--green-light) 0%, #fff 100%);
+    display:flex; align-items:center; gap:8px;
+  }
+  .card-header h3{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--green-dark);}
+  .card-body{padding:18px;}
+
+  /* Fields */
+  .field{margin-bottom:13px;}
+  label{display:block;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:5px;}
+  input[type="text"], input[type="number"]{
+    background:var(--green-light); border:1.5px solid var(--green-mid); color:var(--text);
+    border-radius:var(--r-sm); padding:12px 14px; font-size:16px; font-family:'Nunito',sans-serif;
+    font-weight:800; width:100%; outline:none; transition:all .15s;
+  }
+  input:focus{border-color:var(--green); background:#fff; box-shadow:0 0 0 3px rgba(22,163,74,.14);}
+  .hint{font-size:11px;color:var(--text-muted);font-weight:700;margin-top:4px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Buttons */
+  .btn{
+    border:none;border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-weight:900;
+    cursor:pointer;transition:all .15s;font-size:15px;width:100%;padding:14px;
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-green{background:linear-gradient(135deg, var(--green), var(--green-dark));color:#fff;box-shadow:0 3px 12px rgba(22,163,74,.3);}
+  .btn-green:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(22,163,74,.35);}
+  .btn-ghost{background:transparent;color:var(--text-muted);border:1.5px solid var(--border-mid);}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green-dark);background:var(--green-light);}
+  .btn-danger-sm{background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;}
+
+  /* Result box */
+  .result{background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:var(--r-sm);padding:16px;margin-top:4px;}
+  .result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;}
+  .result-row + .result-row{border-top:1px dashed rgba(22,163,74,.25);}
+  .result-row .rl{font-size:12px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;}
+  .result-row .rv{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:var(--text);}
+  .result-row.total .rv{font-size:20px;color:var(--green-dark);font-weight:700;}
+  .result-row.unit{background:#fff;margin:6px -16px -16px;padding:14px 16px;border-radius:0 0 var(--r-sm) var(--r-sm);border-top:2px solid var(--green-mid);}
+  .result-row.unit .rv{font-size:22px;color:var(--green);}
+
+  /* Product list */
+  .plist{display:flex;flex-direction:column;gap:10px;}
+  .pitem{
+    background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);
+    padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .pitem .pi-name{font-size:14px;font-weight:900;color:var(--text);}
+  .pitem .pi-sub{font-size:11px;color:var(--text-muted);font-weight:700;margin-top:2px;}
+  .pitem .pi-price{font-family:'Space Mono',monospace;font-weight:700;color:var(--green-dark);font-size:16px;white-space:nowrap;}
+  .empty{text-align:center;padding:26px 10px;color:var(--text-muted);font-size:13px;font-weight:700;}
+  .empty .e-ico{font-size:30px;margin-bottom:8px;}
+
+  /* Google Drive card */
+  .drive-card{background:linear-gradient(135deg,#1a3fae 0%,#2f5fd6 100%);border-radius:var(--r);padding:16px 18px;color:#fff;margin-bottom:16px;box-shadow:var(--shadow-lg);}
+  .drive-card h3{font-size:14px;font-weight:900;display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+  .drive-card p{font-size:11.5px;color:rgba(255,255,255,.75);font-weight:700;margin-bottom:12px;}
+  .btn-drive{background:#fff;color:#1a3fae;border:none;border-radius:var(--r-sm);padding:12px;width:100%;font-weight:900;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-drive.connected{background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.5);}
+  .drive-note{font-size:10.5px;color:rgba(255,255,255,.65);font-weight:700;margin-top:8px;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>🏷️ Calculadora de Precios</h1>
+    <p>Despensa Económica — define tu margen y calcula el precio de venta</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>📦 Datos del producto</h3></div>
+    <div class="card-body">
+      <div class="field">
+        <label>Nombre del producto</label>
+        <input type="text" id="inpNombre" placeholder="Ej: Caja de huevos">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Costo total ($)</label>
+          <input type="number" id="inpCosto" placeholder="50.00" step="0.01" min="0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Margen de ganancia (%)</label>
+          <input type="number" id="inpMargen" placeholder="20" step="0.1" min="0" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label>Unidades por paquete (cartones, botellas, etc.)</label>
+        <input type="number" id="inpUnidades" placeholder="1" step="1" min="1" value="1" inputmode="numeric">
+        <div class="hint">Si compras una caja y la vendes por unidad, pon aquí cuántas unidades trae.</div>
+      </div>
+
+      <div class="result" id="resultBox">
+        <div class="result-row">
+          <span class="rl">Ganancia</span>
+          <span class="rv" id="rGanancia">$0.00</span>
+        </div>
+        <div class="result-row total">
+          <span class="rl">Precio de venta (paquete)</span>
+          <span class="rv" id="rTotal">$0.00</span>
+        </div>
+        <div class="result-row unit">
+          <span class="rl">Precio por unidad</span>
+          <span class="rv" id="rUnidad">$0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-green" onclick="guardarProducto()">💾 Guardar producto</button>
+
+  <div class="drive-card">
+    <h3>☁️ Google Drive</h3>
+    <p>Conéctate para que cada PDF se suba automáticamente a tu Drive.</p>
+    <button class="btn-drive" id="btnDrive" onclick="conectarDrive()">🔐 Conectar con Google Drive</button>
+    <div class="drive-note" id="driveNote">Aún no configurado. Ver instrucciones en el código fuente (CLIENT_ID).</div>
+  </div>
+
+  <div class="card" style="margin-top:18px;">
+    <div class="card-header"><h3>📋 Productos guardados</h3></div>
+    <div class="card-body">
+      <div class="plist" id="listaProductos"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const money = n => '$' + (isFinite(n) ? n : 0).toFixed(2);
+
+  function calcular() {
+    const costo    = parseFloat($('inpCosto').value)    || 0;
+    const margen   = parseFloat($('inpMargen').value)   || 0;
+    const unidades = Math.max(1, parseInt($('inpUnidades').value) || 1);
+
+    const ganancia = costo * (margen / 100);
+    const total    = costo + ganancia;
+    const unidad   = total / unidades;
+
+    $('rGanancia').textContent = money(ganancia);
+    $('rTotal').textContent    = money(total);
+    $('rUnidad').textContent   = money(unidad);
+
+    return { costo, margen, unidades, ganancia, total, unidad };
+  }
+
+  ['inpCosto','inpMargen','inpUnidades'].forEach(id => {
+    $(id).addEventListener('input', calcular);
+  });
+
+  function cargarProductos() {
+    try { return JSON.parse(localStorage.getItem('precios_productos') || '[]'); }
+    catch { return []; }
+  }
+  function guardarEnStorage(lista) {
+    localStorage.setItem('precios_productos', JSON.stringify(lista));
+  }
+
+  function fmtFecha(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-SV', {day:'2-digit', month:'2-digit', year:'numeric'}) +
+           ' ' + d.toLocaleTimeString('es-SV', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function renderLista() {
+    const lista = cargarProductos();
+    const cont = $('listaProductos');
+    if (!lista.length) {
+      cont.innerHTML = `<div class="empty"><div class="e-ico">🧮</div>Aún no has guardado ningún producto.<br>Calcula un precio arriba y presiona "Guardar producto".</div>`;
+      return;
+    }
+    cont.innerHTML = lista.map((p, i) => `
+      <div class="pitem">
+        <div>
+          <div class="pi-name">${p.nombre}</div>
+          <div class="pi-sub">Costo ${money(p.costo)} · Margen ${p.margen}% · ${p.unidades} und.</div>
+          <div class="pi-sub">🗓️ ${fmtFecha(p.fecha)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="text-align:right;">
+            <div class="pi-price">${money(p.unidad)}</div>
+            <div class="pi-sub">c/u</div>
+          </div>
+          <button class="btn-danger-sm" onclick="eliminarProducto(${i})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function guardarProducto() {
+    const nombre = $('inpNombre').value.trim();
+    if (!nombre) { $('inpNombre').focus(); return; }
+    const { costo, margen, unidades, total, unidad } = calcular();
+    if (costo <= 0) { $('inpCosto').focus(); return; }
+
+    const lista = cargarProductos();
+    lista.unshift({ nombre, costo, margen, unidades, total, unidad, fecha: new Date().toISOString() });
+    guardarEnStorage(lista);
+    renderLista();
+
+    $('inpNombre').value = '';
+    $('inpCosto').value = '';
+    $('inpMargen').value = '';
+    $('inpUnidades').value = '1';
+    calcular();
+
+    generarYManejarPDF(lista);
+  }
+
+  // ── Genera un PDF con TODOS los productos guardados (con fecha) ──
+  function generarPDFBlob(lista) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = doc.internal.pageSize.getWidth();
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(21, 128, 61);
+    doc.text('Despensa Económica — Lista de Precios', 14, 16);
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generado: ' + new Date().toLocaleString('es-SV'), 14, 22);
+
+    const head = [['Producto', 'Fecha guardado', 'Costo', 'Margen', 'Und.', 'Precio total', 'Precio/und.']];
+    const body = lista.map(p => [
+      p.nombre,
+      fmtFecha(p.fecha),
+      money(p.costo),
+      p.margen + '%',
+      String(p.unidades),
+      money(p.total),
+      money(p.unidad)
+    ]);
+
+    doc.autoTable({
+      head, body, startY: 28,
+      styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 3 },
+      headStyles: { fillColor: [22,163,74], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [240,253,244] },
+      margin: { left: 14, right: 14 }
+    });
+
+    return doc;
+  }
+
+  function generarYManejarPDF(lista) {
+    if (!window.jspdf) { toast('⚠️ jsPDF no cargó todavía, intenta de nuevo'); return; }
+    if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') {
+      // autoTable plugin no está cargado; carga on-demand
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js';
+      s.onload = () => generarYManejarPDF(lista);
+      document.head.appendChild(s);
+      return;
+    }
+    const doc = generarPDFBlob(lista);
+    const nombreArchivo = `Precios_Despensa_${new Date().toISOString().slice(0,10)}.pdf`;
+
+    // Descarga local siempre
+    doc.save(nombreArchivo);
+
+    // Si está conectado a Google Drive, también lo sube
+    if (window._driveAccessToken) {
+      const blob = doc.output('blob');
+      subirPDFaDrive(blob, nombreArchivo);
+    }
+  }
+
+  function toast(msg) {
+    let t = document.getElementById('miniToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'miniToast';
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#052e16;color:#fff;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.3);';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2600);
+  }
+
+  function eliminarProducto(i) {
+    const lista = cargarProductos();
+    lista.splice(i, 1);
+    guardarEnStorage(lista);
+    renderLista();
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // GOOGLE DRIVE — sube el PDF a la carpeta raíz de tu Drive
+  //
+  // PASOS PARA ACTIVARLO (una sola vez, lo hace el dueño del sitio):
+  //  1. Ve a https://console.cloud.google.com/ y crea un proyecto.
+  //  2. Activa la "Google Drive API" (menú "APIs y servicios").
+  //  3. Crea una credencial "ID de cliente de OAuth" tipo "Aplicación web".
+  //  4. En "Orígenes de JavaScript autorizados" agrega la URL exacta
+  //     donde vive esta página, ej: https://es503-eng.github.io
+  //  5. Copia el "Client ID" que te da Google y pégalo abajo en
+  //     GOOGLE_CLIENT_ID reemplazando el texto de ejemplo.
+  //  Sin este paso, el botón de Drive mostrará un aviso y no funcionará;
+  //  el PDF se seguirá descargando localmente sin problema.
+  // ══════════════════════════════════════════════════════════════════
+  const GOOGLE_CLIENT_ID = '970738613017-v2u6gp04eui21t45b3r01regm0h95qnh.apps.googleusercontent.com';
+  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+  window._driveAccessToken = null;
+  let _tokenClient = null;
+
+  function conectarDrive() {
+    if (GOOGLE_CLIENT_ID.startsWith('TU_CLIENT_ID')) {
+      toast('⚠️ Falta configurar el Client ID de Google (ver comentario en el código)');
+      return;
+    }
+    if (window._driveAccessToken) {
+      // Ya conectado → desconectar
+      window._driveAccessToken = null;
+      actualizarEstadoDrive(false);
+      toast('Desconectado de Google Drive');
+      return;
+    }
+    if (!window.google || !google.accounts) {
+      toast('⚠️ Google aún está cargando, intenta de nuevo en un segundo');
+      return;
+    }
+    if (!_tokenClient) {
+      _tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: (resp) => {
+          if (resp && resp.access_token) {
+            window._driveAccessToken = resp.access_token;
+            actualizarEstadoDrive(true);
+            toast('✅ Conectado a Google Drive');
+          }
+        }
+      });
+    }
+    _tokenClient.requestAccessToken();
+  }
+
+  function actualizarEstadoDrive(conectado) {
+    const btn = $('btnDrive');
+    const note = $('driveNote');
+    if (conectado) {
+      btn.textContent = '✅ Conectado — tocar para desconectar';
+      btn.classList.add('connected');
+      note.textContent = 'Cada vez que guardes un producto, el PDF se subirá automáticamente a tu Drive.';
+    } else {
+      btn.textContent = '🔐 Conectar con Google Drive';
+      btn.classList.remove('connected');
+      note.textContent = 'Conéctate para subir el PDF automáticamente cada vez que guardes un producto.';
+    }
+  }
+
+  async function subirPDFaDrive(blob, nombreArchivo) {
+    try {
+      const metadata = { name: nombreArchivo, mimeType: 'application/pdf' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + window._driveAccessToken },
+        body: form
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      toast('☁️ PDF subido a Google Drive');
+    } catch (err) {
+      console.error('Error subiendo a Drive:', err);
+      toast('⚠️ No se pudo subir a Drive (revisa tu conexión o sesión)');
+    }
+  }
+
+  calcular();
+  renderLista();
+</script>
+</body>
+</html>
